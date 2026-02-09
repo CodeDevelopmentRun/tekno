@@ -1,15 +1,20 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CartScreen from "../screens/CartScreen";
 import CategoriesScreen from "../screens/CategoriesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import AdminLoginScreen from "../screens/AdminLoginScreen";
+import AdminDashboardScreen from "../screens/AdminDashboardScreen";
+import AdminProductsScreen from "../screens/AdminProductsScreen";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -53,5 +58,16 @@ export default function AppNavigator() {
       <Tab.Screen name="Kategoriler" component={CategoriesScreen} />
       <Tab.Screen name="Hesabım" component={ProfileScreen} />
     </Tab.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+      <Stack.Screen name="AdminPanel" component={AdminDashboardScreen} />
+      <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />
+    </Stack.Navigator>
   );
 }

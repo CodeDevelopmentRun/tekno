@@ -12,4 +12,17 @@ export const COLORS = {
   warning: "#FF9800",
   error: "#F44336",
   blue: "#2196F3",
+
+  // Admin Panel Colors
+  adminPrimary: "#667eea",
+  adminSecondary: "#764ba2",
+  adminBackground: "#F8F9FA",
+  adminCard: "#FFFFFF",
+  adminText: "#1C1C1E",
+  adminTextLight: "#8E8E93",
+  adminBorder: "#E5E7EB",
+  adminSuccess: "#10B981",
+  adminWarning: "#F59E0B",
+  adminDanger: "#EF4444",
+  adminInfo: "#3B82F6",
 };
