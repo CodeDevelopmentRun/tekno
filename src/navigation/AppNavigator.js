@@ -7,9 +7,16 @@ import FavoritesScreen from "../screens/FavoritesScreen";
 import CartScreen from "../screens/CartScreen";
 import CategoriesScreen from "../screens/CategoriesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import WelcomeScreen from "../screens/WelcomeScreen";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import VerifyCodeScreen from "../screens/VerifyCodeScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import AdminLoginScreen from "../screens/AdminLoginScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import AdminProductsScreen from "../screens/AdminProductsScreen";
+import ProductDetailScreen from "../screens/ProductDetailScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -20,19 +27,16 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-
-          if (route.name === "Ana Sayfa") {
+          if (route.name === "Ana Sayfa")
             iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "Favorilerim") {
+          else if (route.name === "Favorilerim")
             iconName = focused ? "heart" : "heart-outline";
-          } else if (route.name === "Sepetim") {
+          else if (route.name === "Sepetim")
             iconName = focused ? "cart" : "cart-outline";
-          } else if (route.name === "Kategoriler") {
+          else if (route.name === "Kategoriler")
             iconName = focused ? "grid" : "grid-outline";
-          } else if (route.name === "Hesabım") {
+          else if (route.name === "Hesabım")
             iconName = focused ? "person" : "person-outline";
-          }
-
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#FF6B35",
@@ -45,10 +49,7 @@ function MainTabs() {
           borderTopWidth: 1,
           borderTopColor: "#F0F0F0",
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-        },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         headerShown: false,
       })}
     >
@@ -63,8 +64,18 @@ function MainTabs() {
 
 export default function AppNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="Welcome"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminPanel" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />

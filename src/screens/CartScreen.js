@@ -1,4 +1,4 @@
-/*import React, { useState } from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -6,297 +6,246 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
-import { COLORS } from "../utils/colors";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
+import { CartContext } from "../context/CartContext";
 
-export default function CartScreen() {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "iPhone 15 Pro Max 256GB",
-      price: 34499,
-      quantity: 1,
-      image: "https://via.placeholder.com/80x80/EFEFEF/666666?text=iPhone",
-    },
-    {
-      id: 2,
-      name: "Samsung Galaxy S24 Ultra",
-      price: 28999,
-      quantity: 1,
-      image: "https://via.placeholder.com/80x80/EFEFEF/666666?text=Samsung",
-    },
-  ]);
+export default function CartScreen({ navigation }) {
+  const { isDarkMode, colors } = useTheme();
+  const { cartItems, updateQuantity, removeFromCart, clearCart } =
+    useContext(CartContext);
 
-  const updateQuantity = (id, change) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item,
-      ),
-    );
+  const tp = isDarkMode ? "#FFFFFF" : "#111827";
+  const ts = isDarkMode ? "#DDDDDD" : "#374151";
+  const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
+  const cardBg = isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF";
+  const cardBorder = isDarkMode ? "rgba(255,255,255,0.15)" : "#E5E7EB";
+
+  const total = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+
+  const handleClearCart = () => {
+    Alert.alert("Sepeti Temizle", "Tüm ürünler sepetten kaldırılacak.", [
+      { text: "İptal", style: "cancel" },
+      { text: "Temizle", style: "destructive", onPress: clearCart },
+    ]);
   };
 
-  const removeItem = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
-
-  const renderCartItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName} numberOfLines={2}>
-          {item.name}
+  const renderItem = ({ item }) => (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: cardBg, borderColor: cardBorder },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate("ProductDetail", { productId: item.product._id })
+        }
+      >
+        <Image
+          source={{
+            uri:
+              item.product?.images?.[0] ||
+              "https://picsum.photos/200?random=" + item.product?._id,
+          }}
+          style={styles.image}
+        />
+      </TouchableOpacity>
+      <View style={styles.info}>
+        <Text style={[styles.brand, { color: colors.primary }]}>
+          {item.product?.brand}
         </Text>
-        <Text style={styles.itemPrice}>
-          {item.price.toLocaleString("tr-TR")} TL
+        <Text style={[styles.name, { color: tp }]} numberOfLines={2}>
+          {item.product?.name}
         </Text>
-        <View style={styles.quantityContainer}>
+        <Text style={styles.price}>
+          {(item.price * item.quantity).toLocaleString()} TL
+        </Text>
+        <View style={styles.qtyRow}>
           <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, -1)}
+            style={[
+              styles.qtyBtn,
+              { backgroundColor: colors.background, borderColor: cardBorder },
+            ]}
+            onPress={() => {
+              if (item.quantity <= 1) removeFromCart(item._id);
+              else updateQuantity(item._id, item.quantity - 1);
+            }}
           >
-            <Text style={styles.quantityButtonText}>-</Text>
+            <Ionicons
+              name={item.quantity <= 1 ? "trash-outline" : "remove"}
+              size={16}
+              color={item.quantity <= 1 ? "#EF4444" : tp}
+            />
           </TouchableOpacity>
-          <Text style={styles.quantity}>{item.quantity}</Text>
+          <Text style={[styles.qtyText, { color: tp }]}>{item.quantity}</Text>
           <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, 1)}
+            style={[
+              styles.qtyBtn,
+              { backgroundColor: colors.background, borderColor: cardBorder },
+            ]}
+            onPress={() => updateQuantity(item._id, item.quantity + 1)}
           >
-            <Text style={styles.quantityButtonText}>+</Text>
+            <Ionicons name="add" size={16} color={tp} />
           </TouchableOpacity>
         </View>
       </View>
       <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => removeItem(item.id)}
+        style={styles.removeBtn}
+        onPress={() => removeFromCart(item._id)}
       >
-        <Text style={styles.removeButtonText}>🗑️</Text>
+        <Ionicons name="close" size={20} color={tm} />
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Sepetim</Text>
-        <Text style={styles.itemCount}>{cartItems.length} Ürün</Text>
-      </View>
-
-      {cartItems.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛒</Text>
-          <Text style={styles.emptyText}>Sepetiniz Boş</Text>
-          <Text style={styles.emptySubtext}>
-            Ürün ekleyerek alışverişe başlayın
-          </Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: tp }]}>Sepetim</Text>
+          {cartItems.length > 0 && (
+            <TouchableOpacity onPress={handleClearCart}>
+              <Text style={styles.clearText}>Temizle</Text>
+            </TouchableOpacity>
+          )}
         </View>
-      ) : (
-        <>
-          <FlatList
-            data={cartItems}
-            renderItem={renderCartItem}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContainer}
-          />
-          <View style={styles.footer}>
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Toplam:</Text>
-              <Text style={styles.totalAmount}>
-                {calculateTotal().toLocaleString("tr-TR")} TL
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.checkoutButton}>
-              <Text style={styles.checkoutButtonText}>Siparişi Tamamla</Text>
+
+        {cartItems.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="cart-outline" size={80} color={tm} />
+            <Text style={[styles.emptyTitle, { color: tp }]}>
+              Sepetiniz boş
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: tm }]}>
+              Ürünleri sepete ekleyerek alışverişe başla
+            </Text>
+            <TouchableOpacity
+              style={styles.shopBtn}
+              onPress={() => navigation.navigate("Ana Sayfa")}
+            >
+              <Text style={styles.shopBtnText}>Alışverişe Başla</Text>
             </TouchableOpacity>
           </View>
-        </>
-      )}
+        ) : (
+          <>
+            <FlatList
+              data={cartItems}
+              keyExtractor={(item) => item._id}
+              renderItem={renderItem}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+            />
+            <View
+              style={[
+                styles.bottomBar,
+                { backgroundColor: colors.background, borderColor: cardBorder },
+              ]}
+            >
+              <View>
+                <Text style={[styles.totalLabel, { color: tm }]}>
+                  Toplam Tutar
+                </Text>
+                <Text style={[styles.totalPrice, { color: tp }]}>
+                  {total.toLocaleString()} TL
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.checkoutBtn}>
+                <Text style={styles.checkoutText}>Siparişi Tamamla</Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1 },
   header: {
-    backgroundColor: COLORS.primary,
-    paddingTop: 50,
-    paddingBottom: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  title: { fontSize: 26, fontWeight: "bold" },
+  clearText: { color: "#EF4444", fontSize: 14, fontWeight: "600" },
+  list: { padding: 20, gap: 14 },
+  card: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: "hidden",
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.white,
-  },
-  itemCount: {
-    fontSize: 14,
-    color: COLORS.white,
-  },
-  listContainer: {
-    padding: 15,
-  },
-  cartItem: {
-    flexDirection: "row",
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: COLORS.lightGray,
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: "space-between",
-  },
-  itemName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.black,
-    marginBottom: 4,
-  },
-  itemPrice: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  quantityButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 6,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quantityButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.black,
-  },
-  quantity: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginHorizontal: 15,
-    color: COLORS.black,
-  },
-  removeButton: {
-    padding: 8,
-  },
-  removeButtonText: {
-    fontSize: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyIcon: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.black,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.gray,
-  },
-  footer: {
-    backgroundColor: COLORS.white,
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  totalContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.black,
-  },
-  totalAmount: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: COLORS.primary,
-  },
-  checkoutButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  checkoutButtonText: {
-    color: COLORS.white,
+  image: { width: 100, height: 110, resizeMode: "cover" },
+  info: { flex: 1, padding: 12 },
+  brand: { fontSize: 11, fontWeight: "600", marginBottom: 3 },
+  name: { fontSize: 14, fontWeight: "600", marginBottom: 6, lineHeight: 20 },
+  price: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#10B981",
+    marginBottom: 10,
   },
-});*/
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-export default function CartScreen() {
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Sepetim</Text>
-        <Text style={styles.subtitle}>Sepetiniz boş</Text>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  content: {
-    flex: 1,
+  qtyRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  qtyBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    borderWidth: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1C1C1E",
-    marginBottom: 8,
-  },
-  subtitle: {
+  qtyText: {
     fontSize: 16,
-    color: "#8E8E93",
+    fontWeight: "bold",
+    minWidth: 20,
     textAlign: "center",
   },
+  removeBtn: { padding: 10 },
+  empty: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+    gap: 12,
+  },
+  emptyTitle: { fontSize: 22, fontWeight: "bold" },
+  emptySubtitle: { fontSize: 15, textAlign: "center" },
+  shopBtn: {
+    backgroundColor: "#6366F1",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 8,
+  },
+  shopBtnText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },
+  bottomBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderTopWidth: 1,
+  },
+  totalLabel: { fontSize: 13, marginBottom: 4 },
+  totalPrice: { fontSize: 22, fontWeight: "bold" },
+  checkoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#6366F1",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  checkoutText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },
 });

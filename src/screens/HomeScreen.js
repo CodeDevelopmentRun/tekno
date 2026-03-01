@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,132 +7,413 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Dimensions,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 import PopularCategories from "../components/home/PopularCategories";
 import BestSellerBrands from "../components/home/BestSellerBrands";
 import Slider from "../components/home/Slider";
 
-const { width } = Dimensions.get("window");
-
 export default function HomeScreen() {
+  const { isDarkMode, toggleTheme, colors } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 20,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.welcomeText}>Merhaba! 👋</Text>
-              <Text style={styles.headerTitle}>Tekno Mağaza</Text>
-            </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color="#1C1C1E"
-              />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity>
-          </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Gradient Background Orbs */}
+      <View style={styles.backgroundOrbs}>
+        <View
+          style={[
+            styles.orb,
+            styles.orb1,
+            {
+              backgroundColor: colors.orb1,
+              opacity: colors.orbOpacity,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.orb,
+            styles.orb2,
+            {
+              backgroundColor: colors.orb2,
+              opacity: colors.orbOpacity,
+            },
+          ]}
+        />
+      </View>
 
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color="#8E8E93" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Ürün, marka veya kategori ara..."
-              placeholderTextColor="#8E8E93"
-            />
-            <TouchableOpacity style={styles.filterButton}>
-              <Ionicons name="options-outline" size={20} color="#FF6B35" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Slider */}
-        <Slider />
-
-        {/* Popüler Kategoriler */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Popüler Kategoriler</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Tümünü Gör</Text>
-            </TouchableOpacity>
-          </View>
-          <PopularCategories />
-        </View>
-
-        {/* Çok Satan Markalar */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Çok Satan Markalar</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Tümünü Gör</Text>
-            </TouchableOpacity>
-          </View>
-          <BestSellerBrands />
-        </View>
-
-        {/* Öne Çıkan Ürünler */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Öne Çıkan Ürünler</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Tümünü Gör</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.productsContainer}
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Modern Header */}
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                backgroundColor: colors.headerBg,
+                borderColor: colors.headerBorder,
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
           >
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </ScrollView>
-        </View>
+            <View style={styles.headerTop}>
+              <View>
+                <Text
+                  style={[styles.welcomeText, { color: colors.textTertiary }]}
+                >
+                  Merhaba! 👋
+                </Text>
+                <Text
+                  style={[styles.headerTitle, { color: colors.textPrimary }]}
+                >
+                  Tekno Mağaza
+                </Text>
+              </View>
 
-        {/* Kampanyalar */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🔥 Fırsat Ürünleri</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Tümünü Gör</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.campaignBanner}>
-            <View style={styles.campaignContent}>
-              <Text style={styles.campaignBadge}>%50'ye varan</Text>
-              <Text style={styles.campaignTitle}>Yılın En Büyük İndirimi!</Text>
-              <Text style={styles.campaignDescription}>
-                Tüm elektronik ürünlerde özel kampanya
-              </Text>
-              <TouchableOpacity style={styles.campaignButton}>
-                <Text style={styles.campaignButtonText}>Hemen Keşfet</Text>
+              <View style={styles.headerButtons}>
+                {/* Theme Toggle Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.themeButton,
+                    {
+                      backgroundColor: colors.searchBg,
+                      borderColor: colors.searchBorder,
+                    },
+                  ]}
+                  onPress={toggleTheme}
+                >
+                  <Ionicons
+                    name={isDarkMode ? "sunny" : "moon"}
+                    size={22}
+                    color={isDarkMode ? "#FDE047" : "#6366F1"}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.notificationButton,
+                    {
+                      backgroundColor: colors.searchBg,
+                      borderColor: colors.searchBorder,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="notifications-outline"
+                    size={22}
+                    color={colors.textPrimary}
+                  />
+                  <View style={styles.notificationBadge} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Search Bar */}
+            <View
+              style={[
+                styles.searchContainer,
+                {
+                  backgroundColor: colors.searchBg,
+                  borderColor: colors.searchBorder,
+                },
+              ]}
+            >
+              <Ionicons
+                name="search-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
+              <TextInput
+                style={[styles.searchInput, { color: colors.textPrimary }]}
+                placeholder="Ürün, marka ara..."
+                placeholderTextColor={colors.textTertiary}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.filterButton,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.3)"
+                      : "#EEF2FF",
+                    borderColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.5)"
+                      : "#C7D2FE",
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={20}
+                  color={colors.primary}
+                />
               </TouchableOpacity>
             </View>
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              style={styles.campaignImage}
-            />
+          </Animated.View>
+
+          {/* Slider */}
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <Slider />
+          </Animated.View>
+
+          {/* Popüler Kategoriler */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.textPrimary }]}
+              >
+                <Ionicons name="flame" size={22} color="#F59E0B" /> Popüler
+                Kategoriler
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.seeAllButton,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.2)"
+                      : "#EEF2FF",
+                    borderColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.3)"
+                      : "#C7D2FE",
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.seeAllText, { color: colors.primaryLight }]}
+                >
+                  Tümü
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+            <PopularCategories />
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Çok Satan Markalar */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.textPrimary }]}
+              >
+                <Ionicons name="star" size={22} color="#EC4899" /> Çok Satan
+                Markalar
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.seeAllButton,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.2)"
+                      : "#EEF2FF",
+                    borderColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.3)"
+                      : "#C7D2FE",
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.seeAllText, { color: colors.primaryLight }]}
+                >
+                  Tümü
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+            <BestSellerBrands />
+          </View>
+
+          {/* Öne Çıkan Ürünler */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.textPrimary }]}
+              >
+                <Ionicons name="trophy" size={22} color="#10B981" /> Öne Çıkan
+                Ürünler
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.seeAllButton,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.2)"
+                      : "#EEF2FF",
+                    borderColor: isDarkMode
+                      ? "rgba(99, 102, 241, 0.3)"
+                      : "#C7D2FE",
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.seeAllText, { color: colors.primaryLight }]}
+                >
+                  Tümü
+                </Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productsContainer}
+            >
+              {featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  colors={colors}
+                  isDarkMode={isDarkMode}
+                />
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Kampanya Banner */}
+          <View style={styles.section}>
+            <View
+              style={[
+                styles.campaignCard,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(99, 102, 241, 0.15)"
+                    : "#EEF2FF",
+                  borderColor: isDarkMode
+                    ? "rgba(99, 102, 241, 0.3)"
+                    : "#C7D2FE",
+                },
+              ]}
+            >
+              <View style={styles.campaignContent}>
+                <View
+                  style={[
+                    styles.campaignBadge,
+                    {
+                      backgroundColor: isDarkMode
+                        ? "rgba(245, 158, 11, 0.3)"
+                        : "#FEF3C7",
+                      borderColor: isDarkMode
+                        ? "rgba(245, 158, 11, 0.5)"
+                        : "#FDE047",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      {
+                        color: isDarkMode ? "#FDE047" : "#F59E0B",
+                      },
+                    ]}
+                  >
+                    %50'ye varan
+                  </Text>
+                </View>
+                <Text
+                  style={[styles.campaignTitle, { color: colors.textPrimary }]}
+                >
+                  Yılın En Büyük İndirimi!
+                </Text>
+                <Text
+                  style={[
+                    styles.campaignDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Tüm elektronik ürünlerde özel kampanya
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.campaignButton,
+                    {
+                      backgroundColor: isDarkMode ? "#FFF" : colors.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.campaignButtonText,
+                      {
+                        color: isDarkMode ? "#6366F1" : "#FFF",
+                      },
+                    ]}
+                  >
+                    Hemen Keşfet
+                  </Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={16}
+                    color={isDarkMode ? "#6366F1" : "#FFF"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
-// Product Card Component
-const ProductCard = ({ product }) => (
-  <TouchableOpacity style={styles.productCard}>
+const ProductCard = ({ product, colors, isDarkMode }) => (
+  <TouchableOpacity
+    style={[
+      styles.productCard,
+      {
+        backgroundColor: colors.card,
+        borderColor: colors.cardBorder,
+      },
+    ]}
+  >
     <View style={styles.productImageContainer}>
       <Image source={{ uri: product.image }} style={styles.productImage} />
-      <TouchableOpacity style={styles.favoriteButton}>
-        <Ionicons name="heart-outline" size={20} color="#FF6B35" />
+      <TouchableOpacity
+        style={[
+          styles.favoriteButton,
+          {
+            backgroundColor: isDarkMode
+              ? "rgba(0, 0, 0, 0.4)"
+              : "rgba(255, 255, 255, 0.9)",
+            borderColor: colors.cardBorder,
+          },
+        ]}
+      >
+        <Ionicons
+          name="heart-outline"
+          size={20}
+          color={isDarkMode ? "#FFF" : "#EF4444"}
+        />
       </TouchableOpacity>
       {product.discount && (
         <View style={styles.discountBadge}>
@@ -141,18 +422,29 @@ const ProductCard = ({ product }) => (
       )}
     </View>
     <View style={styles.productInfo}>
-      <Text style={styles.productBrand}>{product.brand}</Text>
-      <Text style={styles.productName} numberOfLines={2}>
+      <Text style={[styles.productBrand, { color: colors.textTertiary }]}>
+        {product.brand}
+      </Text>
+      <Text
+        style={[styles.productName, { color: colors.textPrimary }]}
+        numberOfLines={2}
+      >
         {product.name}
       </Text>
       <View style={styles.ratingContainer}>
-        <Ionicons name="star" size={14} color="#FFD700" />
-        <Text style={styles.ratingText}>{product.rating}</Text>
-        <Text style={styles.reviewCount}>({product.reviews})</Text>
+        <Ionicons name="star" size={14} color="#F59E0B" />
+        <Text style={[styles.ratingText, { color: colors.textPrimary }]}>
+          {product.rating}
+        </Text>
+        <Text style={[styles.reviewCount, { color: colors.textTertiary }]}>
+          ({product.reviews})
+        </Text>
       </View>
       <View style={styles.priceContainer}>
         {product.oldPrice && (
-          <Text style={styles.oldPrice}>{product.oldPrice} TL</Text>
+          <Text style={[styles.oldPrice, { color: colors.textTertiary }]}>
+            {product.oldPrice} TL
+          </Text>
         )}
         <Text style={styles.price}>{product.price} TL</Text>
       </View>
@@ -160,7 +452,6 @@ const ProductCard = ({ product }) => (
   </TouchableOpacity>
 );
 
-// Sample Data
 const featuredProducts = [
   {
     id: 1,
@@ -171,7 +462,7 @@ const featuredProducts = [
     discount: 8,
     rating: 4.8,
     reviews: 234,
-    image: "https://via.placeholder.com/200",
+    image: "https://picsum.photos/200?random=1",
   },
   {
     id: 2,
@@ -182,7 +473,7 @@ const featuredProducts = [
     discount: 9,
     rating: 4.7,
     reviews: 189,
-    image: "https://via.placeholder.com/200",
+    image: "https://picsum.photos/200?random=2",
   },
   {
     id: 3,
@@ -191,87 +482,112 @@ const featuredProducts = [
     price: "84.999",
     rating: 4.9,
     reviews: 156,
-    image: "https://via.placeholder.com/200",
-  },
-  {
-    id: 4,
-    name: "AirPods Pro 2. Nesil",
-    brand: "Apple",
-    price: "8.999",
-    oldPrice: "10.999",
-    discount: 18,
-    rating: 4.8,
-    reviews: 445,
-    image: "https://via.placeholder.com/200",
+    image: "https://picsum.photos/200?random=3",
   },
 ];
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+  },
+  backgroundOrbs: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  orb: {
+    position: "absolute",
+    borderRadius: 1000,
+  },
+  orb1: {
+    width: 300,
+    height: 300,
+    top: -150,
+    left: -100,
+  },
+  orb2: {
+    width: 250,
+    height: 250,
+    bottom: -100,
+    right: -80,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   welcomeText: {
     fontSize: 14,
-    color: "#8E8E93",
     marginBottom: 4,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    color: "#1C1C1E",
+  },
+  headerButtons: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  themeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
   },
   notificationButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F8F9FA",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
   },
   notificationBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FF3B30",
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#EF4444",
+    borderWidth: 2,
+    borderColor: "#6366F1",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    height: 50,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 48,
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
     fontSize: 15,
-    color: "#1C1C1E",
   },
   filterButton: {
     width: 36,
     height: 36,
-    borderRadius: 8,
-    backgroundColor: "#FFE5DC",
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
+    borderWidth: 1,
   },
   section: {
     marginTop: 24,
@@ -284,83 +600,81 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#1C1C1E",
+  },
+  seeAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   seeAllText: {
-    fontSize: 14,
-    color: "#FF6B35",
+    fontSize: 12,
     fontWeight: "600",
+    marginRight: 4,
   },
   productsContainer: {
     paddingRight: 20,
   },
   productCard: {
-    width: 180,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    width: 170,
+    borderRadius: 18,
     marginRight: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   productImageContainer: {
     position: "relative",
-    padding: 12,
+    padding: 10,
   },
   productImage: {
     width: "100%",
-    height: 160,
+    height: 150,
     borderRadius: 12,
     resizeMode: "cover",
   },
   favoriteButton: {
     position: "absolute",
-    top: 20,
-    right: 20,
+    top: 18,
+    right: 18,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
   },
   discountBadge: {
     position: "absolute",
-    top: 20,
-    left: 20,
-    backgroundColor: "#FF3B30",
+    top: 18,
+    left: 18,
+    backgroundColor: "rgba(239, 68, 68, 0.9)",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   discountText: {
-    color: "#FFFFFF",
-    fontSize: 12,
+    color: "#FFF",
+    fontSize: 11,
     fontWeight: "bold",
   },
   productInfo: {
     padding: 12,
   },
   productBrand: {
-    fontSize: 12,
-    color: "#8E8E93",
+    fontSize: 11,
     marginBottom: 4,
   },
   productName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#1C1C1E",
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   ratingContainer: {
     flexDirection: "row",
@@ -368,80 +682,69 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratingText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#1C1C1E",
     marginLeft: 4,
   },
   reviewCount: {
-    fontSize: 12,
-    color: "#8E8E93",
+    fontSize: 11,
     marginLeft: 4,
   },
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   oldPrice: {
-    fontSize: 13,
-    color: "#8E8E93",
-    textDecorationLine: "line-through",
+    fontSize: 12,
+    textDecorationLine: "through",
   },
   price: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
-    color: "#FF6B35",
+    color: "#10B981",
   },
-  campaignBanner: {
-    flexDirection: "row",
-    backgroundColor: "#FF6B35",
-    borderRadius: 16,
+  campaignCard: {
+    borderRadius: 20,
     padding: 20,
-    alignItems: "center",
+    borderWidth: 1,
     marginBottom: 20,
   },
   campaignContent: {
     flex: 1,
   },
   campaignBadge: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
     alignSelf: "flex-start",
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 11,
     fontWeight: "600",
   },
   campaignTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#FFFFFF",
     marginBottom: 6,
   },
   campaignDescription: {
     fontSize: 13,
-    color: "#FFFFFF",
-    opacity: 0.9,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   campaignButton: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 12,
     alignSelf: "flex-start",
   },
   campaignButtonText: {
-    color: "#FF6B35",
     fontWeight: "bold",
-    fontSize: 14,
-  },
-  campaignImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
+    fontSize: 13,
+    marginRight: 6,
   },
 });

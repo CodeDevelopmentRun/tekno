@@ -5,316 +5,472 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { AdminContext } from "../context/AdminContext";
-import { COLORS } from "../utils/colors";
+import { useTheme } from "../context/ThemeContext";
+import { AuthContext } from "../context/AuthContext";
 
 export default function ProfileScreen({ navigation }) {
-  const { isAdmin } = useContext(AdminContext);
+  const { isDarkMode, colors } = useTheme();
+  const { user, logout } = useContext(AuthContext);
 
-  const menuItems = [
+  const handleLogout = async () => {
+    Alert.alert("Çıkış Yap", "Çıkış yapmak istediğinizden emin misiniz?", [
+      { text: "İptal", style: "cancel" },
+      {
+        text: "Çıkış Yap",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          navigation.replace("Welcome");
+        },
+      },
+    ]);
+  };
+  const stats = [
+    { icon: "bag-outline", value: "24", label: "Sipariş", color: "#6366F1" },
+    { icon: "heart", value: "89", label: "Favori", color: "#EC4899" },
+    { icon: "star", value: "4.8", label: "Puan", color: "#F59E0B" },
+  ];
+
+  const menuSections = [
     {
-      id: 1,
-      title: "Hesap Bilgilerim",
-      icon: "person-outline",
-      screen: "AccountInfo",
-      color: COLORS.adminInfo,
+      title: "HESAP",
+      items: [
+        {
+          icon: "bag-outline",
+          title: "Siparişlerim",
+          subtitle: "Sipariş geçmişinizi görüntüleyin",
+          color: "#6366F1",
+          bgColor: "rgba(99,102,241,0.15)",
+          onPress: () => {},
+        },
+        {
+          icon: "location-outline",
+          title: "Adreslerim",
+          subtitle: "Teslimat adreslerini yönetin",
+          color: "#10B981",
+          bgColor: "rgba(16,185,129,0.15)",
+          onPress: () => {},
+        },
+        {
+          icon: "card-outline",
+          title: "Ödeme Yöntemleri",
+          subtitle: "Kartlarınızı yönetin",
+          color: "#8B5CF6",
+          bgColor: "rgba(139,92,246,0.15)",
+          onPress: () => {},
+        },
+      ],
     },
     {
-      id: 2,
-      title: "Siparişlerim",
-      icon: "receipt-outline",
-      screen: "MyOrders",
-      color: COLORS.adminSuccess,
+      title: "TERCİHLER",
+      items: [
+        {
+          icon: "notifications-outline",
+          title: "Bildirimler",
+          subtitle: "Bildirim ayarları",
+          color: "#F59E0B",
+          bgColor: "rgba(245,158,11,0.15)",
+          onPress: () => {},
+        },
+        {
+          icon: "settings-outline",
+          title: "Ayarlar",
+          subtitle: "Uygulama ayarları",
+          color: "#6B7280",
+          bgColor: "rgba(107,114,128,0.15)",
+          onPress: () => {},
+        },
+      ],
     },
     {
-      id: 3,
-      title: "Adreslerim",
-      icon: "location-outline",
-      screen: "MyAddresses",
-      color: COLORS.adminWarning,
-    },
-    {
-      id: 4,
-      title: "Bildirimler",
-      icon: "notifications-outline",
-      screen: "Notifications",
-      color: COLORS.adminPrimary,
-    },
-    {
-      id: 5,
-      title: "Yardım & Destek",
-      icon: "help-circle-outline",
-      screen: "Support",
-      color: COLORS.adminTextLight,
+      title: "DESTEK",
+      items: [
+        {
+          icon: "help-circle-outline",
+          title: "Yardım & Destek",
+          subtitle: "SSS ve iletişim",
+          color: "#3B82F6",
+          bgColor: "rgba(59,130,246,0.15)",
+          onPress: () => {},
+        },
+        {
+          icon: "information-circle-outline",
+          title: "Hakkında",
+          subtitle: "Uygulama bilgileri",
+          color: "#14B8A6",
+          bgColor: "rgba(20,184,166,0.15)",
+          onPress: () => {},
+        },
+      ],
     },
   ];
 
-  const handleAdminAccess = () => {
-    if (isAdmin) {
-      navigation.navigate("AdminPanel");
-    } else {
-      navigation.navigate("AdminLogin");
-    }
-  };
+  const tp = isDarkMode ? "#FFFFFF" : "#111827";
+  const ts = isDarkMode ? "#DDDDDD" : "#374151";
+  const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
+  const cardBg = isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF";
+  const cardBorder = isDarkMode ? "rgba(255,255,255,0.15)" : "#E5E7EB";
+  const divider = isDarkMode ? "rgba(255,255,255,0.1)" : "#F0F0F0";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Hesabım</Text>
-        </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.backgroundOrbs, { zIndex: 0 }]}>
+        <View
+          style={[
+            styles.orb,
+            styles.orb1,
+            { backgroundColor: "#6366F1", opacity: isDarkMode ? 0.15 : 0.06 },
+          ]}
+        />
+        <View
+          style={[
+            styles.orb,
+            styles.orb2,
+            { backgroundColor: "#EC4899", opacity: isDarkMode ? 0.15 : 0.06 },
+          ]}
+        />
+        <View
+          style={[
+            styles.orb,
+            styles.orb3,
+            { backgroundColor: "#8B5CF6", opacity: isDarkMode ? 0.15 : 0.06 },
+          ]}
+        />
+      </View>
 
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color={COLORS.white} />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Kullanıcı Adı</Text>
-            <Text style={styles.profileEmail}>kullanici@email.com</Text>
-          </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Ionicons
-              name="create-outline"
-              size={20}
-              color={COLORS.adminPrimary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Admin Access Button */}
-        <TouchableOpacity
-          style={styles.adminButton}
-          onPress={handleAdminAccess}
+      <SafeAreaView style={[styles.safeArea, { zIndex: 1 }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.adminButtonContent}>
-            <View style={styles.adminIconContainer}>
-              <Ionicons
-                name="shield-checkmark"
-                size={24}
-                color={COLORS.adminPrimary}
-              />
-            </View>
-            <View style={styles.adminTextContainer}>
-              <Text style={styles.adminButtonTitle}>
-                {isAdmin ? "Admin Paneli" : "Admin Girişi"}
+          {/* Profile Header */}
+          <View
+            style={[
+              styles.profileHeader,
+              { backgroundColor: cardBg, borderColor: cardBorder },
+            ]}
+          >
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarGradient}>
+                <View style={styles.avatarInner}>
+                  <View style={styles.avatarContainer}>
+                    <Ionicons name="person" size={56} color="#FFF" />
+                  </View>
+                </View>
+              </View>
+              <Text style={[styles.userName, { color: tp }]}>
+                {user?.name || "Misafir Kullanıcı"}
               </Text>
-              <Text style={styles.adminButtonSubtitle}>
-                {isAdmin ? "Yönetim paneline git" : "Yönetici olarak giriş yap"}
+              <Text style={[styles.userEmail, { color: ts }]}>
+                {user?.email || "Giriş yapın"}
               </Text>
+              {user?.role && (
+                <View style={styles.roleBadge}>
+                  <Ionicons
+                    name={user.role === "admin" ? "shield-checkmark" : "person"}
+                    size={14}
+                    color="#FFF"
+                  />
+                  <Text style={styles.roleText}>
+                    {user.role === "admin" ? "Admin" : "Kullanıcı"}
+                  </Text>
+                </View>
+              )}
             </View>
-            <Ionicons
-              name="chevron-forward"
-              size={24}
-              color={COLORS.adminPrimary}
-            />
-          </View>
-        </TouchableOpacity>
 
-        {/* Menu Items */}
-        <View style={styles.menuContainer}>
-          {menuItems.map((item) => (
+            {user && (
+              <View
+                style={[styles.statsContainer, { borderTopColor: divider }]}
+              >
+                {stats.map((stat, i) => (
+                  <View key={i} style={styles.statCard}>
+                    <View
+                      style={[
+                        styles.statIconContainer,
+                        { backgroundColor: stat.color + "25" },
+                      ]}
+                    >
+                      <Ionicons name={stat.icon} size={24} color={stat.color} />
+                    </View>
+                    <Text style={[styles.statValue, { color: tp }]}>
+                      {stat.value}
+                    </Text>
+                    <Text style={[styles.statLabel, { color: tm }]}>
+                      {stat.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Admin Panel */}
+          {user?.role === "admin" && (
             <TouchableOpacity
-              key={item.id}
-              style={styles.menuItem}
-              onPress={() => {
-                // Navigation will be added later
-                console.log(`Navigate to ${item.screen}`);
-              }}
+              style={[
+                styles.adminCard,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(139,92,246,0.2)"
+                    : "#EDE9FE",
+                  borderColor: isDarkMode ? "rgba(139,92,246,0.4)" : "#C4B5FD",
+                },
+              ]}
+              onPress={() => navigation.navigate("AdminPanel")}
+              activeOpacity={0.8}
             >
+              <View style={styles.adminIconCircle}>
+                <Ionicons name="shield-checkmark" size={28} color="#FFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.adminTitle, { color: tp }]}>
+                  Admin Paneli
+                </Text>
+                <Text style={[styles.adminSubtitle, { color: ts }]}>
+                  Yönetim ve kontrol merkezi
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+
+          {/* Menu Sections */}
+          {menuSections.map((section, si) => (
+            <View key={si} style={styles.menuSection}>
+              <Text style={[styles.sectionTitle, { color: tm }]}>
+                {section.title}
+              </Text>
               <View
                 style={[
-                  styles.menuIcon,
-                  { backgroundColor: `${item.color}15` },
+                  styles.menuCard,
+                  { backgroundColor: cardBg, borderColor: cardBorder },
                 ]}
               >
-                <Ionicons name={item.icon} size={22} color={item.color} />
+                {section.items.map((item, ii) => (
+                  <TouchableOpacity
+                    key={ii}
+                    style={[
+                      styles.menuItem,
+                      ii !== section.items.length - 1 && {
+                        borderBottomWidth: 1,
+                        borderBottomColor: divider,
+                      },
+                    ]}
+                    onPress={item.onPress}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.menuIconCircle,
+                        { backgroundColor: item.bgColor },
+                      ]}
+                    >
+                      <Ionicons name={item.icon} size={22} color={item.color} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.menuTitle, { color: tp }]}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.menuSubtitle, { color: ts }]}>
+                        {item.subtitle}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={tm} />
+                  </TouchableOpacity>
+                ))}
               </View>
-              <Text style={styles.menuText}>{item.title}</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.adminTextLight}
-              />
-            </TouchableOpacity>
+            </View>
           ))}
-        </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
-          <Ionicons
-            name="log-out-outline"
-            size={22}
-            color={COLORS.adminDanger}
-          />
-          <Text style={styles.logoutText}>Çıkış Yap</Text>
-        </TouchableOpacity>
+          {/* Logout / Login */}
+          {user ? (
+            <TouchableOpacity
+              style={[
+                styles.logoutButton,
+                {
+                  borderColor: isDarkMode ? "rgba(239,68,68,0.4)" : "#FECACA",
+                  backgroundColor: isDarkMode
+                    ? "rgba(239,68,68,0.12)"
+                    : "#FEF2F2",
+                },
+              ]}
+              onPress={handleLogout}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+              <Text style={styles.logoutText}>Çıkış Yap</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate("Login")}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="log-in-outline" size={24} color="#FFF" />
+              <Text style={styles.loginButtonText}>Giriş Yap</Text>
+            </TouchableOpacity>
+          )}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Versiyon 1.0.0</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={[styles.versionText, { color: tm }]}>
+            Tekno App v1.0.0
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.adminBackground,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.adminText,
-  },
-  profileCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    marginHorizontal: 20,
+  container: { flex: 1 },
+  backgroundOrbs: { position: "absolute", width: "100%", height: "100%" },
+  orb: { position: "absolute", borderRadius: 1000 },
+  orb1: { width: 300, height: 300, top: -150, right: -100 },
+  orb2: { width: 250, height: 250, bottom: 200, left: -80 },
+  orb3: { width: 200, height: 200, top: 400, right: -50 },
+  safeArea: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+
+  profileHeader: {
+    borderRadius: 28,
+    padding: 28,
     marginBottom: 20,
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: COLORS.adminPrimary,
+  avatarSection: { alignItems: "center", marginBottom: 24 },
+  avatarGradient: {
+    padding: 6,
+    borderRadius: 100,
+    backgroundColor: "#6366F1",
+    marginBottom: 16,
+    shadowColor: "#6366F1",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  avatarInner: {
+    padding: 3,
+    borderRadius: 100,
+    backgroundColor: "rgba(15,15,30,0.8)",
+  },
+  avatarContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "rgba(99,102,241,0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.adminText,
-    marginBottom: 4,
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: COLORS.adminTextLight,
-  },
-  editButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.adminBackground,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  adminButton: {
-    backgroundColor: COLORS.white,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
-    shadowColor: COLORS.adminPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 2,
-    borderColor: COLORS.adminPrimary,
-  },
-  adminButtonContent: {
+  userName: { fontSize: 26, fontWeight: "bold", marginBottom: 6 },
+  userEmail: { fontSize: 15, marginBottom: 14 },
+  roleBadge: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-  },
-  adminIconContainer: {
-    width: 48,
-    height: 48,
+    backgroundColor: "rgba(236,72,153,0.25)",
+    paddingHorizontal: 18,
+    paddingVertical: 8,
     borderRadius: 24,
-    backgroundColor: "#F5F3FF",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(236,72,153,0.4)",
+  },
+  roleText: { fontSize: 14, fontWeight: "600", color: "#F472B6" },
+
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingTop: 24,
+    borderTopWidth: 1,
+  },
+  statCard: { alignItems: "center" },
+  statIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginBottom: 10,
   },
-  adminTextContainer: {
-    flex: 1,
+  statValue: { fontSize: 22, fontWeight: "bold", marginBottom: 4 },
+  statLabel: { fontSize: 13 },
+
+  adminCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 20,
   },
-  adminButtonTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.adminPrimary,
-    marginBottom: 4,
+  adminIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(139,92,246,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  adminButtonSubtitle: {
-    fontSize: 13,
-    color: COLORS.adminTextLight,
+  adminTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
+  adminSubtitle: { fontSize: 14 },
+
+  menuSection: { marginBottom: 28 },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    marginBottom: 14,
+    paddingLeft: 6,
   },
-  menuContainer: {
-    paddingHorizontal: 20,
-  },
+  menuCard: { borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    padding: 18,
+    gap: 14,
   },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  menuIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
   },
-  menuText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "500",
-    color: COLORS.adminText,
-  },
+  menuTitle: { fontSize: 16, fontWeight: "600", marginBottom: 3 },
+  menuSubtitle: { fontSize: 13 },
+
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.white,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    padding: 16,
-    borderRadius: 12,
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 28,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: COLORS.adminDanger,
+    paddingVertical: 18,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.adminDanger,
-    marginLeft: 8,
-  },
-  footer: {
+  logoutText: { color: "#EF4444", fontSize: 16, fontWeight: "600" },
+  loginButton: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 20,
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 28,
+    borderRadius: 18,
+    backgroundColor: "#6366F1",
+    paddingVertical: 18,
   },
-  footerText: {
-    fontSize: 12,
-    color: COLORS.adminTextLight,
+  loginButtonText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
+  versionText: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 16,
   },
 });

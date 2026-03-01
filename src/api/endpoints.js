@@ -16,8 +16,8 @@ export const CategoryAPI = {
 export const UserAPI = {
   login: (credentials) => api.post("/auth/login", credentials),
   register: (data) => api.post("/auth/register", data),
-  getProfile: () => api.get("/user/profile"),
-  updateProfile: (data) => api.put("/user/profile", data),
+  getProfile: () => api.get("/auth/profile"), // /user/profile → /auth/profile
+  updateProfile: (data) => api.put("/auth/profile", data), // /user/profile → /auth/profile
 };
 
 export const CartAPI = {

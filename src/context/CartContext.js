@@ -1,22 +1,29 @@
-import React, { createContext, useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import { CartAPI } from "../api/endpoints";
+import { AuthContext } from "./AuthContext";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  const { user } = useContext(AuthContext) || {};
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    if (user) {
+      loadCart();
+    } else {
+      setCartItems([]);
+      setCartCount(0);
+    }
+  }, [user]);
 
   const loadCart = async () => {
     try {
       const response = await CartAPI.get();
-      setCartItems(response.data);
-      calculateCartCount(response.data);
+      const items = response.data.data || [];
+      setCartItems(items);
+      calculateCartCount(items);
     } catch (error) {
       console.error("Cart load error:", error);
     }
@@ -29,7 +36,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity = 1) => {
     try {
-      await CartAPI.add(product.id, quantity);
+      await CartAPI.add(product._id, quantity);
       await loadCart();
       return { success: true };
     } catch (error) {

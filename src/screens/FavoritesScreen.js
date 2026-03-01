@@ -1,4 +1,4 @@
-/*import React, { useState } from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -7,211 +7,149 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { COLORS } from "../utils/colors";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
+import { FavoriteContext } from "../context/FavoriteContext";
 
-export default function FavoritesScreen() {
-  const [favorites, setFavorites] = useState([
-    {
-      id: 1,
-      name: "MacBook Air M2",
-      price: 42999,
-      image: "https://via.placeholder.com/150x150/EFEFEF/666666?text=MacBook",
-    },
-    {
-      id: 2,
-      name: 'iPad Pro 11"',
-      price: 28999,
-      image: "https://via.placeholder.com/150x150/EFEFEF/666666?text=iPad",
-    },
-  ]);
+export default function FavoritesScreen({ navigation }) {
+  const { isDarkMode, colors } = useTheme();
+  const { favorites, toggleFavorite } = useContext(FavoriteContext);
 
-  const removeFavorite = (id) => {
-    setFavorites((prev) => prev.filter((item) => item.id !== id));
-  };
+  const tp = isDarkMode ? "#FFFFFF" : "#111827";
+  const ts = isDarkMode ? "#DDDDDD" : "#374151";
+  const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
+  const cardBg = isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF";
+  const cardBorder = isDarkMode ? "rgba(255,255,255,0.15)" : "#E5E7EB";
 
-  const renderFavoriteItem = ({ item }) => (
-    <View style={styles.favoriteItem}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName} numberOfLines={2}>
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.card,
+        { backgroundColor: cardBg, borderColor: cardBorder },
+      ]}
+      onPress={() =>
+        navigation.navigate("ProductDetail", { productId: item._id })
+      }
+      activeOpacity={0.85}
+    >
+      <Image
+        source={{
+          uri:
+            item.images?.[0] || "https://picsum.photos/200?random=" + item._id,
+        }}
+        style={styles.image}
+      />
+      <View style={styles.info}>
+        <Text style={[styles.brand, { color: colors.primary }]}>
+          {item.brand}
+        </Text>
+        <Text style={[styles.name, { color: tp }]} numberOfLines={2}>
           {item.name}
         </Text>
-        <Text style={styles.itemPrice}>
-          {item.price.toLocaleString("tr-TR")} TL
-        </Text>
-        <TouchableOpacity style={styles.addToCartButton}>
-          <Text style={styles.addToCartText}>Sepete Ekle</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => removeFavorite(item.id)}
-      >
-        <Text style={styles.heartIcon}>💔</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Favorilerim</Text>
-        <Text style={styles.itemCount}>{favorites.length} Ürün</Text>
-      </View>
-
-      {favorites.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🤍</Text>
-          <Text style={styles.emptyText}>Favori Ürününüz Yok</Text>
-          <Text style={styles.emptySubtext}>
-            Beğendiğiniz ürünleri favorilere ekleyin
+        <View style={styles.ratingRow}>
+          <Ionicons name="star" size={13} color="#F59E0B" />
+          <Text style={[styles.rating, { color: tm }]}>
+            {item.rating?.toFixed(1)}
           </Text>
         </View>
-      ) : (
-        <FlatList
-          data={favorites}
-          renderItem={renderFavoriteItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
+        <Text style={styles.price}>{item.price?.toLocaleString()} TL</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.removeBtn}
+        onPress={() => toggleFavorite(item._id)}
+      >
+        <Ionicons name="heart" size={22} color="#EF4444" />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: tp }]}>Favorilerim</Text>
+          <Text style={[styles.count, { color: tm }]}>
+            {favorites.length} ürün
+          </Text>
+        </View>
+
+        {favorites.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="heart-outline" size={80} color={tm} />
+            <Text style={[styles.emptyTitle, { color: tp }]}>
+              Favori ürün yok
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: tm }]}>
+              Beğendiğin ürünleri favorilere ekle
+            </Text>
+            <TouchableOpacity
+              style={styles.shopBtn}
+              onPress={() => navigation.navigate("Ana Sayfa")}
+            >
+              <Text style={styles.shopBtnText}>Alışverişe Başla</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={favorites}
+            keyExtractor={(item) => item._id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1 },
   header: {
-    backgroundColor: COLORS.primary,
-    paddingTop: 50,
-    paddingBottom: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  title: { fontSize: 26, fontWeight: "bold" },
+  count: { fontSize: 14 },
+  list: { padding: 20, gap: 14 },
+  card: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  image: { width: 100, height: 100, resizeMode: "cover" },
+  info: { flex: 1, padding: 12 },
+  brand: { fontSize: 11, fontWeight: "600", marginBottom: 3 },
+  name: { fontSize: 14, fontWeight: "600", marginBottom: 6, lineHeight: 20 },
+  ratingRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 4,
+    marginBottom: 6,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.white,
-  },
-  itemCount: {
-    fontSize: 14,
-    color: COLORS.white,
-  },
-  listContainer: {
-    padding: 15,
-  },
-  favoriteItem: {
-    flexDirection: "row",
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  itemImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    backgroundColor: COLORS.lightGray,
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: "space-between",
-  },
-  itemName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.black,
-  },
-  itemPrice: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.primary,
-  },
-  addToCartButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignSelf: "flex-start",
-  },
-  addToCartText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  removeButton: {
-    padding: 8,
-  },
-  heartIcon: {
-    fontSize: 24,
-  },
-  emptyContainer: {
+  rating: { fontSize: 12 },
+  price: { fontSize: 16, fontWeight: "bold", color: "#10B981" },
+  removeBtn: { padding: 14, justifyContent: "flex-start" },
+  empty: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 40,
+    gap: 12,
   },
-  emptyIcon: {
-    fontSize: 80,
-    marginBottom: 20,
+  emptyTitle: { fontSize: 22, fontWeight: "bold" },
+  emptySubtitle: { fontSize: 15, textAlign: "center" },
+  shopBtn: {
+    backgroundColor: "#6366F1",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 8,
   },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.black,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.gray,
-  },
-});
-*/
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-export default function FavoritesScreen() {
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Favorilerim</Text>
-        <Text style={styles.subtitle}>Henüz favori ürün eklemediniz</Text>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1C1C1E",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#8E8E93",
-    textAlign: "center",
-  },
+  shopBtnText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },
 });

@@ -1,8 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// SQL Server bağlantısı için backend API URL'iniz
-const API_BASE_URL = "http://192.168.1.130:3000/api"; // Şimdilik kullanılmayacak
+const API_BASE_URL = "http://192.168.1.103:5000/api"; // DÜZELTİLDİ
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -12,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor - Token ekleme
 api.interceptors.request.use(
   async (config) => {
     try {
@@ -25,18 +23,14 @@ api.interceptors.request.use(
       return Promise.reject(error);
     }
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-// Response Interceptor - Hata yönetimi
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem("userToken");
-      // Kullanıcıyı login ekranına yönlendir
     }
     return Promise.reject(error);
   },
