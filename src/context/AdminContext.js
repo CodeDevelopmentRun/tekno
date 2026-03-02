@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../api/axiosConfig";
 
 export const AdminContext = createContext();
 
@@ -16,7 +17,6 @@ export const AdminProvider = ({ children }) => {
     try {
       const adminToken = await AsyncStorage.getItem("adminToken");
       const adminData = await AsyncStorage.getItem("adminUser");
-
       if (adminToken && adminData) {
         setIsAdmin(true);
         setAdminUser(JSON.parse(adminData));
@@ -28,35 +28,25 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  const adminLogin = async (username, password) => {
+  const adminLogin = async (email, password) => {
     try {
-      // Demo admin credentials
-      if (username === "admin" && password === "admin123") {
-        const adminData = {
-          id: 1,
-          username: "admin",
-          name: "Admin Kullanıcı",
-          email: "admin@tekno.com",
-          role: "admin",
-        };
+      const response = await api.post("/auth/login", { email, password });
+      const { token, user } = response.data;
 
-        await AsyncStorage.setItem("adminToken", "admin-token-123");
-        await AsyncStorage.setItem("adminUser", JSON.stringify(adminData));
-
-        setIsAdmin(true);
-        setAdminUser(adminData);
-
-        return { success: true };
-      } else {
-        return {
-          success: false,
-          message: "Kullanıcı adı veya şifre hatalı",
-        };
+      if (user.role !== "admin") {
+        return { success: false, message: "Bu hesabın admin yetkisi yok" };
       }
+
+      await AsyncStorage.setItem("adminToken", token);
+      await AsyncStorage.setItem("adminUser", JSON.stringify(user));
+      setIsAdmin(true);
+      setAdminUser(user);
+
+      return { success: true };
     } catch (error) {
       return {
         success: false,
-        message: "Giriş başarısız",
+        message: error.response?.data?.message || "Giriş başarısız",
       };
     }
   };
@@ -74,13 +64,7 @@ export const AdminProvider = ({ children }) => {
 
   return (
     <AdminContext.Provider
-      value={{
-        isAdmin,
-        adminUser,
-        isLoading,
-        adminLogin,
-        adminLogout,
-      }}
+      value={{ isAdmin, adminUser, isLoading, adminLogin, adminLogout }}
     >
       {children}
     </AdminContext.Provider>

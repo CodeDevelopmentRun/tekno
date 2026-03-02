@@ -182,7 +182,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // API URL - SİZİN İÇİN AYARLADIM
-const API_URL = "http://192.168.1.103:5000/api";
+const API_URL = "http://192.168.1.101:5000/api";
 
 // DEBUG için - silmeyin!
 console.log("🌐 API URL:", API_URL);

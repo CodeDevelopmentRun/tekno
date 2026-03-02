@@ -16,27 +16,24 @@ import { AdminContext } from "../context/AdminContext";
 import { COLORS } from "../utils/colors";
 
 export default function AdminLoginScreen({ navigation }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const { adminLogin } = useContext(AdminContext);
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    if (!email || !password) {
       Alert.alert("Hata", "Lütfen tüm alanları doldurun");
       return;
     }
-
     setLoading(true);
-    const result = await adminLogin(username, password);
+    const result = await adminLogin(email, password);
     setLoading(false);
-
     if (result.success) {
       navigation.replace("AdminPanel");
     } else {
-      Alert.alert("Hata", result.message);
+      Alert.alert("Giriş Başarısız", result.message);
     }
   };
 
@@ -71,18 +68,19 @@ export default function AdminLoginScreen({ navigation }) {
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Ionicons
-                name="person-outline"
+                name="mail-outline"
                 size={20}
                 color={COLORS.adminTextLight}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Kullanıcı Adı"
+                placeholder="E-posta"
                 placeholderTextColor={COLORS.adminTextLight}
-                value={username}
-                onChangeText={setUsername}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
+                keyboardType="email-address"
                 autoCorrect={false}
               />
             </View>
@@ -131,13 +129,13 @@ export default function AdminLoginScreen({ navigation }) {
               )}
             </TouchableOpacity>
 
-            <View style={styles.demoInfo}>
+            <View style={styles.infoBox}>
               <Ionicons
                 name="information-circle-outline"
                 size={16}
                 color={COLORS.adminInfo}
               />
-              <Text style={styles.demoText}>Demo: admin / admin123</Text>
+              <Text style={styles.infoText}>admin@tekno.com / admin123</Text>
             </View>
           </View>
         </View>
@@ -147,16 +145,9 @@ export default function AdminLoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.adminBackground,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  header: {
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: COLORS.adminBackground },
+  keyboardView: { flex: 1 },
+  header: { padding: 20 },
   backButton: {
     width: 40,
     height: 40,
@@ -170,15 +161,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
+  content: { flex: 1, justifyContent: "center", padding: 20 },
+  logoContainer: { alignItems: "center", marginBottom: 40 },
   logo: {
     width: 100,
     height: 100,
@@ -199,13 +183,8 @@ const styles = StyleSheet.create({
     color: COLORS.adminText,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.adminTextLight,
-  },
-  form: {
-    width: "100%",
-  },
+  subtitle: { fontSize: 16, color: COLORS.adminTextLight },
+  form: { width: "100%" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -220,17 +199,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: COLORS.adminText,
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, fontSize: 16, color: COLORS.adminText },
+  eyeIcon: { padding: 8 },
   loginButton: {
     backgroundColor: COLORS.adminPrimary,
     borderRadius: 12,
@@ -244,15 +215,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  loginButtonDisabled: {
-    opacity: 0.7,
-  },
-  loginButtonText: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  demoInfo: {
+  loginButtonDisabled: { opacity: 0.7 },
+  loginButtonText: { color: COLORS.white, fontSize: 18, fontWeight: "bold" },
+  infoBox: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -261,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFF6FF",
     borderRadius: 8,
   },
-  demoText: {
+  infoText: {
     marginLeft: 8,
     fontSize: 14,
     color: COLORS.adminInfo,
