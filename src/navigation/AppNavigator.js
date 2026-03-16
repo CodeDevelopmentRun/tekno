@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CartScreen from "../screens/CartScreen";
@@ -17,6 +18,13 @@ import AdminLoginScreen from "../screens/AdminLoginScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import AdminProductsScreen from "../screens/AdminProductsScreen";
 import ProductDetailScreen from "../screens/ProductDetailScreen";
+import CheckoutScreen from "../screens/CheckoutScreen";
+import OrderSuccessScreen from "../screens/OrderSuccessScreen";
+import OrdersScreen from "../screens/OrdersScreen";
+import OrderDetailScreen from "../screens/OrderDetailScreen";
+import KargocuLoginScreen from "../screens/KargocuLoginScreen";
+import KargocuDashboardScreen from "../screens/KargocuDashboardScreen";
+import ReviewScreen from "../screens/ReviewScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -62,12 +70,13 @@ function MainTabs() {
   );
 }
 
-export default function AppNavigator() {
+export default function AppNavigator({ initialRoute }) {
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName={initialRoute || "Welcome"}
       screenOptions={{ headerShown: false }}
     >
+      {/* Kullanıcı ekranları */}
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
@@ -76,9 +85,24 @@ export default function AppNavigator() {
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+      <Stack.Screen name="Orders" component={OrdersScreen} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <Stack.Screen name="Review" component={ReviewScreen} />
+
+      {/* Admin ekranları */}
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminPanel" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />
+
+      {/* Kargocu ekranları */}
+      <Stack.Screen name="KargocuLogin" component={KargocuLoginScreen} />
+      <Stack.Screen
+        name="CourierDashboard"
+        component={KargocuDashboardScreen}
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
     </Stack.Navigator>
   );
 }

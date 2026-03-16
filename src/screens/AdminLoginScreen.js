@@ -128,15 +128,6 @@ export default function AdminLoginScreen({ navigation }) {
                 <Text style={styles.loginButtonText}>Giriş Yap</Text>
               )}
             </TouchableOpacity>
-
-            <View style={styles.infoBox}>
-              <Ionicons
-                name="information-circle-outline"
-                size={16}
-                color={COLORS.adminInfo}
-              />
-              <Text style={styles.infoText}>admin@tekno.com / admin123</Text>
-            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -216,7 +207,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   loginButtonDisabled: { opacity: 0.7 },
-  loginButtonText: { color: COLORS.white, fontSize: 18, fontWeight: "bold" },
+  loginButtonText: { color: COLORS.black, fontSize: 18, fontWeight: "bold" },
   infoBox: {
     flexDirection: "row",
     alignItems: "center",

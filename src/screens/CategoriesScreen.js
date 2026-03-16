@@ -14,100 +14,121 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import api from "../api/axiosConfig";
 
-const CATEGORY_ICONS = {
-  Telefon: "phone-portrait-outline",
-  Bilgisayar: "laptop-outline",
-  Tablet: "tablet-portrait-outline",
-  Kulaklık: "headset-outline",
-  "Akıllı Saat": "watch-outline",
-  Kamera: "camera-outline",
-  TV: "tv-outline",
-  Oyun: "game-controller-outline",
-  Aksesuar: "bag-outline",
-  Diğer: "grid-outline",
-};
-
-const CATEGORY_COLORS = [
-  "#6366F1",
-  "#EC4899",
-  "#10B981",
-  "#F59E0B",
-  "#3B82F6",
-  "#8B5CF6",
-  "#EF4444",
-  "#14B8A6",
-  "#F97316",
-  "#6B7280",
+const CATEGORIES = [
+  {
+    name: "Telefon",
+    image:
+      "https://wp.oggusto.com/wp-content/uploads/2025/01/en-son-cikan-telefon-modelleri.webp",
+  },
+  {
+    name: "Bilgisayar",
+    image:
+      "https://www.beko.com.tr/media/resize/9243831600_MDM2_LOW_1.png/530Wx530H/image.webp",
+  },
+  {
+    name: "Bilgisayar Parçaları",
+    image:
+      "https://iis-akakce.akamaized.net/p.z?https%3A%2F%2Fimage01%2Eidefix%2Ecom%2Fresize%2F500%2F500%2Fproduct%2F1688079%2Fintel%2Di5%2D10400%2D8gb%2D240gb%2Dssd%2D24%2Dmonitorlu%2Dev%2Dve%2Dofis%2Dbilgisayari%2Dbusiness%2D66c3a2bd219fe%2Ejpg",
+  },
+  {
+    name: "Tablet",
+    image:
+      "https://cdn.dsmcdn.com/mnresize/400/-/ty1742/product/media/images/prod/PIM/20250903/14/f60ddc0e-246f-4647-9fb8-7e95e786a858/1_org_zoom.jpg",
+  },
+  { name: "Kamera", image: "https://www.alkatek.net/myimages/gkc.jpg" },
+  {
+    name: "TV & Ev Elektroniği",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2TDOIgQediE_xGA0c63B_8zR_8I6bHhxu7A&s",
+  },
+  {
+    name: "Kulaklık & Ses",
+    image:
+      "https://www.teknomaster38.com.tr/images/product/4646633923600-26-3521908883354-748-p9-bluetooth-kulaklik-bluetoothlu-kulaklik-cesitleri-222-13-B.jpg",
+  },
+  {
+    name: "Akıllı Saat & Bileklik",
+    image:
+      "https://www.tumsarf.com/image/cache/catalog/urunler/akilli-saat/c1-bileklik/a3-2-750x550.jpg",
+  },
+  {
+    name: "Ofis",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTB0U_GXKG03twaJWt2EowAIFxTwYDfYWwyw&s",
+  },
+  {
+    name: "Kırtasiye & Aksesuar",
+    image:
+      "https://tr.widenyrack.org/uploads/202324644/small/cute-office-organizer-sets3389c4e2-b923-419a-b045-21d6dd561127.jpg?size=360x0",
+  },
+  {
+    name: "Oyun & Hobi",
+    image:
+      "https://www.senetsepet.com/idea/jz/77/myassets/products/571/202400007.jpg?revision=1768662450",
+  },
+  {
+    name: "Elektrikli Ev Aletleri",
+    image:
+      "https://www.tgrthaber.com/mavikadin/wp-content/uploads/2024/09/elektrik-canavarlari-olarak-biliniyorlar-faturayi-sisiriyorlar-iste-en-cok-yakan-10-ev-aleti.jpg",
+  },
+  {
+    name: "Kişisel Bakım Ürünleri",
+    image:
+      "https://www.buseterim.com.tr/upload/default/2021/1/27/sacmasas7.jpg",
+  },
+  {
+    name: "Mutfak Aletleri",
+    image:
+      "https://blog.teknosa.com/wp-content/uploads/2021/10/kitchen-appliances-blender-toaster-coffee-machine-meat-ginde.jpg",
+  },
+  {
+    name: "Drone",
+    image:
+      "https://www.klasfoto.com.tr/shop/rc/57/myassets/products/425/dji-mini-4k-drone-fly-more-combo.jpg?revision=1765449969",
+  },
+  {
+    name: "Modem & Router",
+    image:
+      "https://dlcdnwebimgs.asus.com/gain/d1539132-be5b-4884-80fd-e9873d741421/",
+  },
+  {
+    name: "Güç & Şarj",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_9YWNSL_Z5RH2Bw5GPK_y8spVQEh-Y0VHHQ&s",
+  },
+  {
+    name: "Yazıcı & Tarayıcı",
+    image:
+      "https://www.ofisostim.com/idea/an/79/myassets/products/095/epson-l3250-yazici-tarayici-fotokopi-renkli-tankli-yazici-11729178.jpeg?revision=1708642171",
+  },
 ];
 
 export default function CategoriesScreen({ navigation, route }) {
   const { isDarkMode, colors } = useTheme();
-  const [categories, setCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(
-    route?.params?.category || null,
-  );
-  const [searchQuery, setSearchQuery] = useState(
-    route?.params?.searchQuery || "",
-  );
-  const [loading, setLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const tp = isDarkMode ? "#FFFFFF" : "#111827";
   const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
-  const cardBg = isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF";
-  const cardBorder = isDarkMode ? "rgba(255,255,255,0.15)" : "#E5E7EB";
+  const bg = isDarkMode ? "#111827" : "#FFFFFF";
+  const border = isDarkMode ? "rgba(255,255,255,0.1)" : "#F0F0F0";
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  const filteredCategories = CATEGORIES.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-  useEffect(() => {
-    if (selectedCategory) {
-      loadByCategory(selectedCategory);
-    } else if (!searchQuery) {
-      loadAllProducts();
-    }
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    if (searchQuery) {
-      const timeout = setTimeout(() => handleSearch(searchQuery), 500);
-      return () => clearTimeout(timeout);
-    } else {
-      setSearchResults([]);
-      if (selectedCategory) loadByCategory(selectedCategory);
-      else loadAllProducts();
-    }
-  }, [searchQuery]);
-
-  const loadCategories = async () => {
-    try {
-      const res = await api.get("/products/categories");
-      setCategories(res.data.data || []);
-    } catch (e) {
-      console.error("Kategoriler yüklenemedi:", e);
-    }
+  const handleCategoryPress = (category) => {
+    setSelectedCategory(category);
+    loadByCategory(category.name);
   };
 
-  const loadAllProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/products");
-      setProducts(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadByCategory = async (category) => {
+  const loadByCategory = async (categoryName) => {
     try {
       setLoading(true);
       const res = await api.get(
-        `/products/category/${encodeURIComponent(category)}`,
+        `/products/category/${encodeURIComponent(categoryName)}`,
       );
       setProducts(res.data.data || []);
     } catch (e) {
@@ -116,39 +137,18 @@ export default function CategoriesScreen({ navigation, route }) {
       setLoading(false);
     }
   };
-
-  const handleSearch = async (query) => {
-    if (!query.trim()) return;
-    try {
-      setSearching(true);
-      const res = await api.get(
-        `/products/search?q=${encodeURIComponent(query)}`,
-      );
-      setSearchResults(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const displayProducts = searchQuery ? searchResults : products;
 
   const renderProduct = ({ item }) => (
     <TouchableOpacity
-      style={[
-        styles.productCard,
-        { backgroundColor: cardBg, borderColor: cardBorder },
-      ]}
+      style={[styles.productCard, { backgroundColor: bg, borderColor: border }]}
       onPress={() =>
         navigation.navigate("ProductDetail", { productId: item._id })
       }
-      activeOpacity={0.85}
     >
       <Image
         source={{
           uri:
-            item.images?.[0] || "https://picsum.photos/200?random=" + item._id,
+            item.images?.[0] || "https://picsum.photos/100?random=" + item._id,
         }}
         style={styles.productImage}
       />
@@ -159,147 +159,113 @@ export default function CategoriesScreen({ navigation, route }) {
         <Text style={[styles.productName, { color: tp }]} numberOfLines={2}>
           {item.name}
         </Text>
-        <View style={styles.ratingRow}>
-          <Ionicons name="star" size={13} color="#F59E0B" />
-          <Text style={[styles.ratingText, { color: tm }]}>
-            {item.rating?.toFixed(1) || "0.0"}
-          </Text>
-          <Text style={[styles.reviewText, { color: tm }]}>
-            ({item.reviewCount || 0})
-          </Text>
-        </View>
-        <View style={styles.priceRow}>
-          {item.oldPrice ? (
-            <Text style={[styles.oldPrice, { color: tm }]}>
-              {item.oldPrice?.toLocaleString()} TL
-            </Text>
-          ) : null}
-          <Text style={styles.price}>{item.price?.toLocaleString()} TL</Text>
-          {item.stock === 0 && (
-            <View style={styles.outOfStock}>
-              <Text style={styles.outOfStockText}>Tükendi</Text>
-            </View>
-          )}
-        </View>
+        <Text style={styles.productPrice}>
+          {item.price?.toLocaleString()} TL
+        </Text>
       </View>
-      {item.discount > 0 && (
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>-%{item.discount}</Text>
-        </View>
-      )}
+      <Ionicons name="chevron-forward" size={20} color={tm} />
     </TouchableOpacity>
   );
+
+  const renderCategoryItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.categoryRow,
+        { borderBottomColor: border, backgroundColor: bg },
+      ]}
+      onPress={() => handleCategoryPress(item)}
+      activeOpacity={0.7}
+    >
+      <Image source={{ uri: item.image }} style={styles.categoryImage} />
+      <Text style={[styles.categoryName, { color: tp }]}>{item.name}</Text>
+      <Ionicons name="chevron-forward" size={22} color={tm} />
+    </TouchableOpacity>
+  );
+
+  if (selectedCategory) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={[styles.header, { borderBottomColor: border }]}>
+            <TouchableOpacity
+              onPress={() => setSelectedCategory(null)}
+              style={styles.backBtn}
+            >
+              <Ionicons name="arrow-back" size={24} color={tp} />
+            </TouchableOpacity>
+            <Text style={[styles.title, { color: tp }]}>
+              {selectedCategory.name}
+            </Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color={colors.primary}
+              style={{ marginTop: 40 }}
+            />
+          ) : products.length === 0 ? (
+            <View style={styles.empty}>
+              <Ionicons name="cube-outline" size={60} color={tm} />
+              <Text style={[styles.emptyTitle, { color: tp }]}>
+                Bu kategoride ürün yok
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={products}
+              keyExtractor={(item) => item._id}
+              renderItem={renderProduct}
+              contentContainerStyle={{ paddingVertical: 8 }}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: border }]}>
           <Text style={[styles.title, { color: tp }]}>Kategoriler</Text>
+          <TouchableOpacity>
+            <Ionicons name="search-outline" size={26} color={tp} />
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
         <View
           style={[
             styles.searchContainer,
-            { backgroundColor: cardBg, borderColor: cardBorder },
+            { backgroundColor: isDarkMode ? "#1F2937" : "#F5F5F5" },
           ]}
         >
-          <Ionicons name="search-outline" size={20} color={tm} />
+          <Ionicons name="search-outline" size={18} color={tm} />
           <TextInput
             style={[styles.searchInput, { color: tp }]}
-            placeholder="Ürün, marka ara..."
+            placeholder="Kategori ara..."
             placeholderTextColor={tm}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            returnKeyType="search"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={20} color={tm} />
+              <Ionicons name="close-circle" size={18} color={tm} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Category Chips */}
-        {!searchQuery && (
-          <View style={styles.categoriesWrapper}>
-            <FlatList
-              data={[{ name: "Tümü" }, ...categories.map((c) => ({ name: c }))]}
-              keyExtractor={(item) => item.name}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoriesRow}
-              renderItem={({ item, index }) => {
-                const isSelected =
-                  item.name === "Tümü"
-                    ? !selectedCategory
-                    : selectedCategory === item.name;
-                const color =
-                  CATEGORY_COLORS[(index - 1) % CATEGORY_COLORS.length];
-                const icon = CATEGORY_ICONS[item.name] || "grid-outline";
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.categoryChip,
-                      isSelected
-                        ? {
-                            backgroundColor:
-                              item.name === "Tümü" ? "#6366F1" : color,
-                            borderColor: "transparent",
-                          }
-                        : { backgroundColor: cardBg, borderColor: cardBorder },
-                    ]}
-                    onPress={() => {
-                      if (item.name === "Tümü") setSelectedCategory(null);
-                      else setSelectedCategory(item.name);
-                    }}
-                  >
-                    <Ionicons
-                      name={item.name === "Tümü" ? "grid" : icon}
-                      size={16}
-                      color={isSelected ? "#FFF" : tm}
-                    />
-                    <Text
-                      style={[
-                        styles.categoryChipText,
-                        { color: isSelected ? "#FFF" : tm },
-                      ]}
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-        )}
-
-        {/* Products */}
-        {loading || searching ? (
-          <ActivityIndicator
-            size="large"
-            color={colors.primary}
-            style={{ marginTop: 40 }}
-          />
-        ) : displayProducts.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="search-outline" size={60} color={tm} />
-            <Text style={[styles.emptyTitle, { color: tp }]}>
-              {searchQuery ? "Sonuç bulunamadı" : "Bu kategoride ürün yok"}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={displayProducts}
-            keyExtractor={(item) => item._id}
-            renderItem={renderProduct}
-            contentContainerStyle={styles.productsList}
-            showsVerticalScrollIndicator={false}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-          />
-        )}
+        {/* Category List */}
+        <FlatList
+          data={filteredCategories}
+          keyExtractor={(item) => item.name}
+          renderItem={renderCategoryItem}
+          showsVerticalScrollIndicator={false}
+        />
       </SafeAreaView>
     </View>
   );
@@ -307,82 +273,55 @@ export default function CategoriesScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingVertical: 16 },
-  title: { fontSize: 28, fontWeight: "bold" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  backBtn: { width: 40 },
+  title: { fontSize: 22, fontWeight: "bold" },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 20,
-    marginBottom: 12,
+    marginHorizontal: 16,
+    marginVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    height: 48,
-    borderWidth: 1,
+    borderRadius: 12,
+    height: 44,
   },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 15 },
-  categoriesWrapper: { marginBottom: 8 },
-  categoriesRow: { paddingHorizontal: 20, gap: 8 },
-  categoryChip: {
+  categoryRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
-  categoryChipText: { fontSize: 13, fontWeight: "600" },
-  productsList: { paddingHorizontal: 16, paddingBottom: 20 },
-  row: { gap: 12, marginBottom: 12 },
+  categoryImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    resizeMode: "cover",
+    marginRight: 16,
+  },
+  categoryName: { flex: 1, fontSize: 16, fontWeight: "600" },
   productCard: {
-    flex: 1,
-    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    overflow: "hidden",
-    position: "relative",
+    padding: 12,
   },
-  productImage: { width: "100%", height: 150, resizeMode: "cover" },
-  productInfo: { padding: 10 },
-  productBrand: { fontSize: 11, fontWeight: "600", marginBottom: 2 },
-  productName: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 4,
-    lineHeight: 18,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    marginBottom: 4,
-  },
-  ratingText: { fontSize: 12, fontWeight: "600" },
-  reviewText: { fontSize: 11 },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 4,
-  },
-  oldPrice: { fontSize: 11, textDecorationLine: "line-through" },
-  price: { fontSize: 14, fontWeight: "bold", color: "#10B981" },
-  outOfStock: {
-    backgroundColor: "#EF444420",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  outOfStockText: { fontSize: 10, color: "#EF4444", fontWeight: "600" },
-  discountBadge: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  discountText: { color: "#FFF", fontSize: 10, fontWeight: "bold" },
+  productImage: { width: 70, height: 70, borderRadius: 8, resizeMode: "cover" },
+  productInfo: { flex: 1, marginLeft: 12 },
+  productBrand: { fontSize: 11, fontWeight: "600" },
+  productName: { fontSize: 13, fontWeight: "600", marginVertical: 3 },
+  productPrice: { fontSize: 14, fontWeight: "bold", color: "#10B981" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: "600" },
+  emptyTitle: { fontSize: 16, fontWeight: "600" },
 });

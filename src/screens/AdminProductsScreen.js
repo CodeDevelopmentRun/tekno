@@ -19,16 +19,51 @@ import { COLORS } from "../utils/colors";
 import api from "../api/axiosConfig";
 
 const CATEGORIES = [
+  // Telefon & İletişim
   "Telefon",
-  "Bilgisayar",
   "Tablet",
-  "Kulaklık",
   "Akıllı Saat",
-  "Kamera",
+  "Akıllı Bileklik",
+  // Bilgisayar
+  "Bilgisayar",
+  "Laptop",
+  "Monitör",
+  "Klavye & Mouse",
+  "Hard Disk & SSD",
+  // Ses & Görüntü
+  "Kulaklık",
+  "Hoparlör",
   "TV",
-  "Oyun",
-  "Aksesuar",
-  "Diğer",
+  "Projeksiyon",
+  // Fotoğraf & Video
+  "Kamera",
+  "Drone",
+  "Lens & Aksesuar",
+  // Oyun
+  "Oyun Konsolu",
+  "Oyun Aksesuarı",
+  "Oyun Koltuğu",
+  // Ev Elektroniği
+  "Robot Süpürge",
+  "Akıllı Ev",
+  "Klima",
+  "Beyaz Eşya",
+  // Ağ & İnternet
+  "Modem & Router",
+  "Switch & Hub",
+  "Kablo & Adaptör",
+  // Güç & Şarj
+  "Powerbank",
+  "Şarj Cihazı",
+  "UPS",
+  // Yazıcı & Ofis
+  "Yazıcı",
+  "Tarayıcı",
+  "Projeksiyon",
+  // Aksesuar
+  "Telefon Kılıfı",
+  "Ekran Koruyucu",
+  "Çanta & Sırt Çantası",
 ];
 
 const emptyForm = {

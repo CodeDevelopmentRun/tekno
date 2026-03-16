@@ -101,7 +101,7 @@ export default function AdminDashboardScreen({ navigation }) {
 
   const handleLogout = () => {
     adminLogout();
-    navigation.replace("ProfileScreen");
+    navigation.replace("Welcome");
   };
 
   return (

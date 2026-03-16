@@ -29,6 +29,7 @@ export default function ProfileScreen({ navigation }) {
       },
     ]);
   };
+
   const stats = [
     { icon: "bag-outline", value: "24", label: "Sipariş", color: "#6366F1" },
     { icon: "heart", value: "89", label: "Favori", color: "#EC4899" },
@@ -45,7 +46,7 @@ export default function ProfileScreen({ navigation }) {
           subtitle: "Sipariş geçmişinizi görüntüleyin",
           color: "#6366F1",
           bgColor: "rgba(99,102,241,0.15)",
-          onPress: () => {},
+          onPress: () => navigation.navigate("Orders"), // ✅ EKLENDI
         },
         {
           icon: "location-outline",
@@ -333,7 +334,6 @@ const styles = StyleSheet.create({
   orb3: { width: 200, height: 200, top: 400, right: -50 },
   safeArea: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
-
   profileHeader: {
     borderRadius: 28,
     padding: 28,
@@ -379,7 +379,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(236,72,153,0.4)",
   },
   roleText: { fontSize: 14, fontWeight: "600", color: "#F472B6" },
-
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -397,7 +396,6 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: 22, fontWeight: "bold", marginBottom: 4 },
   statLabel: { fontSize: 13 },
-
   adminCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -417,7 +415,6 @@ const styles = StyleSheet.create({
   },
   adminTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
   adminSubtitle: { fontSize: 14 },
-
   menuSection: { marginBottom: 28 },
   sectionTitle: {
     fontSize: 12,
@@ -442,7 +439,6 @@ const styles = StyleSheet.create({
   },
   menuTitle: { fontSize: 16, fontWeight: "600", marginBottom: 3 },
   menuSubtitle: { fontSize: 13 },
-
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",

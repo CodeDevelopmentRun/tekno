@@ -90,7 +90,16 @@ export default function CartScreen({ navigation }) {
               styles.qtyBtn,
               { backgroundColor: colors.background, borderColor: cardBorder },
             ]}
-            onPress={() => updateQuantity(item._id, item.quantity + 1)}
+            onPress={() => {
+              if (item.quantity >= item.product?.stock) {
+                Alert.alert(
+                  "Yetersiz Stok",
+                  `Bu üründen en fazla ${item.product?.stock} adet ekleyebilirsiniz.`,
+                );
+                return;
+              }
+              updateQuantity(item._id, item.quantity + 1);
+            }}
           >
             <Ionicons name="add" size={16} color={tp} />
           </TouchableOpacity>
@@ -156,7 +165,10 @@ export default function CartScreen({ navigation }) {
                   {total.toLocaleString()} TL
                 </Text>
               </View>
-              <TouchableOpacity style={styles.checkoutBtn}>
+              <TouchableOpacity
+                style={styles.checkoutBtn}
+                onPress={() => navigation.navigate("Checkout")}
+              >
                 <Text style={styles.checkoutText}>Siparişi Tamamla</Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFF" />
               </TouchableOpacity>

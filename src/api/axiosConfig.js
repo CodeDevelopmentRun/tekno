@@ -1,7 +1,16 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-const API_BASE_URL = "http://192.168.1.101:5000/api";
+const getApiUrl = () => {
+  if (Platform.OS === "android" && !Constants.isDevice) {
+    return "http://10.0.2.2:5000/api"; // Android Emülatör
+  }
+  return "http://192.168.1.100:5000/api"; // Gerçek telefon (WiFi IP)
+};
+
+const API_BASE_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,5 +44,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
 export default api;

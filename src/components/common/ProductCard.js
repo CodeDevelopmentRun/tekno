@@ -4,10 +4,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { FavoriteContext } from "../../context/FavoriteContext";
 
+// Her zaman nokta ayracı kullanan fiyat formatı: 120.000 TL
+const formatPrice = (value) => {
+  if (!value && value !== 0) return "";
+  return Math.round(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function ProductCard({ product, onPress }) {
   const { isDarkMode, colors } = useTheme();
   const { isFavorite, toggleFavorite } = useContext(FavoriteContext);
   const fav = isFavorite(product._id);
+
+  // Eski fiyat yalnızca gerçekten daha yüksekse göster
+  const hasDiscount = product.oldPrice && product.oldPrice > product.price;
 
   return (
     <TouchableOpacity
@@ -70,13 +81,16 @@ export default function ProductCard({ product, onPress }) {
             ({product.reviewCount || 0})
           </Text>
         </View>
+
         <View style={styles.priceRow}>
-          {product.oldPrice && (
+          {/* Önce asıl fiyat (büyük, yeşil) */}
+          <Text style={styles.price}>{formatPrice(product.price)} TL</Text>
+          {/* Sonra eski yüksek fiyat (küçük, çizili) — sadece gerçekten yüksekse */}
+          {hasDiscount && (
             <Text style={[styles.oldPrice, { color: colors.textTertiary }]}>
-              {product.oldPrice.toLocaleString()} TL
+              {formatPrice(product.oldPrice)} TL
             </Text>
           )}
-          <Text style={styles.price}>{product.price?.toLocaleString()} TL</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -124,7 +138,12 @@ const styles = StyleSheet.create({
   },
   rating: { fontSize: 12, fontWeight: "600" },
   reviews: { fontSize: 11 },
-  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  oldPrice: { fontSize: 12, textDecorationLine: "line-through" },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
   price: { fontSize: 15, fontWeight: "bold", color: "#10B981" },
+  oldPrice: { fontSize: 12, textDecorationLine: "line-through" },
 });
