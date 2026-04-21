@@ -5,9 +5,9 @@ import Constants from "expo-constants";
 
 const getApiUrl = () => {
   if (Platform.OS === "android" && !Constants.isDevice) {
-    return "http://10.0.2.2:5000/api"; // Android Emülatör
+    return "http://10.0.2.2:5000/api";
   }
-  return "http://192.168.1.100:5000/api"; // Gerçek telefon (WiFi IP)
+  return "http://10.72.10.90:5000/api";
 };
 
 const API_BASE_URL = getApiUrl();
@@ -23,7 +23,10 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
+      const adminToken = await AsyncStorage.getItem("adminToken");
+      const userToken = await AsyncStorage.getItem("userToken");
+      const token = adminToken || userToken;
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -39,9 +42,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      await AsyncStorage.removeItem("adminToken");
       await AsyncStorage.removeItem("userToken");
     }
     return Promise.reject(error);
   },
 );
+
 export default api;

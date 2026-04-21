@@ -10,9 +10,8 @@ export const CartProvider = ({ children }) => {
   const { user } = useContext(AuthContext) || {};
 
   useEffect(() => {
-    if (user) {
-      loadCart();
-    } else {
+    if (user) loadCart();
+    else {
       setCartItems([]);
       setCartCount(0);
     }
@@ -34,9 +33,14 @@ export const CartProvider = ({ children }) => {
     setCartCount(total);
   };
 
-  const addToCart = async (product, quantity = 1) => {
+  // ✅ variant parametresi eklendi
+  const addToCart = async (product, variant = null, quantity = 1) => {
     try {
-      await CartAPI.add(product._id, quantity);
+      await CartAPI.add(
+        product._id,
+        quantity,
+        variant ? { color: variant.color, colorCode: variant.colorCode } : null,
+      );
       await loadCart();
       return { success: true };
     } catch (error) {

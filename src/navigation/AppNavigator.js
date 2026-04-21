@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
+// Ekranları import ediyoruz (Yolların doğruluğundan emin ol)
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CartScreen from "../screens/CartScreen";
@@ -25,6 +26,8 @@ import OrderDetailScreen from "../screens/OrderDetailScreen";
 import KargocuLoginScreen from "../screens/KargocuLoginScreen";
 import KargocuDashboardScreen from "../screens/KargocuDashboardScreen";
 import ReviewScreen from "../screens/ReviewScreen";
+import BrandsScreen from "../screens/BrandsScreen";
+import ProductsByBrandScreen from "../screens/ProductsByBrandScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -50,7 +53,7 @@ function MainTabs() {
         tabBarActiveTintColor: "#FF6B35",
         tabBarInactiveTintColor: "#8E8E93",
         tabBarStyle: {
-          height: 110,
+          height: 90, // Yüksekliği biraz optimize ettim
           paddingBottom: 15,
           paddingTop: 15,
           backgroundColor: "#FFFFFF",
@@ -70,13 +73,19 @@ function MainTabs() {
   );
 }
 
-export default function AppNavigator({ initialRoute }) {
+// initialRoute prop'u dışarıdan gelmezse varsayılan olarak "Welcome" ekranı açılır
+export default function AppNavigator({ initialRoute = "Welcome" }) {
   return (
     <Stack.Navigator
-      initialRouteName={initialRoute || "Welcome"}
-      screenOptions={{ headerShown: false }}
+      // Eğer uygulama hala kargocuda açılıyorsa,
+      // aşağıyı geçici olarak initialRouteName="Welcome" yapıp dene.
+      initialRouteName={initialRoute}
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right", // Geçiş efekti ekledik
+      }}
     >
-      {/* Kullanıcı ekranları */}
+      {/* --- MÜŞTERİ / GENEL EKRANLAR --- */}
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
@@ -90,18 +99,23 @@ export default function AppNavigator({ initialRoute }) {
       <Stack.Screen name="Orders" component={OrdersScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="Review" component={ReviewScreen} />
+      <Stack.Screen name="BrandsScreen" component={BrandsScreen} />
+      <Stack.Screen name="ProductsByBrand" component={ProductsByBrandScreen} />
 
-      {/* Admin ekranları */}
+      {/* --- ADMIN EKRANLARI --- */}
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminPanel" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />
 
-      {/* Kargocu ekranları */}
+      {/* --- KARGOCU EKRANLARI --- */}
       <Stack.Screen name="KargocuLogin" component={KargocuLoginScreen} />
       <Stack.Screen
         name="CourierDashboard"
         component={KargocuDashboardScreen}
-        options={{ headerShown: false, gestureEnabled: false }}
+        options={{
+          headerShown: false,
+          // gestureEnabled: false, // Bunu kapattım ki yanlışlıkla geri çıkınca uygulama çökmesin
+        }}
       />
     </Stack.Navigator>
   );

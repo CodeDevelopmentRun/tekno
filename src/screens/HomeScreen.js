@@ -99,7 +99,7 @@ export default function HomeScreen({ navigation }) {
                 <Text
                   style={[styles.welcomeText, { color: colors.textTertiary }]}
                 >
-                  Merhaba! 👋
+                  En iyi teknoloji ürünleri için
                 </Text>
                 <Text
                   style={[styles.headerTitle, { color: colors.textPrimary }]}

@@ -8,18 +8,18 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
 import Constants from "expo-constants";
 
 const getApiUrl = () => {
   if (Platform.OS === "android" && !Constants.isDevice) {
     return "http://10.0.2.2:5000";
   }
-  return "http://192.168.1.100:5000";
+  return "http://10.72.10.90:5000";
 };
 const API_URL = getApiUrl();
 
@@ -301,7 +301,11 @@ export default function KargocuDashboardScreen({ navigation }) {
           <Text style={s.name}>{courierName}</Text>
         </View>
         <TouchableOpacity
-          onPress={handleLogout}
+          onPress={async () => {
+            await AsyncStorage.removeItem("courierToken");
+            await AsyncStorage.removeItem("courierUser");
+            navigation.reset({ index: 0, routes: [{ name: "Welcome" }] });
+          }}
           style={s.logoutBtn}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >

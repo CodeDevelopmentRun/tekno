@@ -18,7 +18,7 @@ const getApiUrl = () => {
   if (Platform.OS === "android" && !Constants.isDevice) {
     return "http://10.0.2.2:5000";
   }
-  return "http://192.168.1.100:5000";
+  return "http://10.72.10.90:5000";
 };
 const API_URL = getApiUrl();
 

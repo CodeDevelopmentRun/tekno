@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,55 +15,60 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { COLORS } from "../utils/colors";
 import api from "../api/axiosConfig";
 
 const CATEGORIES = [
-  // Telefon & İletişim
   "Telefon",
   "Tablet",
   "Akıllı Saat",
   "Akıllı Bileklik",
-  // Bilgisayar
   "Bilgisayar",
   "Laptop",
   "Monitör",
   "Klavye & Mouse",
   "Hard Disk & SSD",
-  // Ses & Görüntü
   "Kulaklık",
   "Hoparlör",
   "TV",
   "Projeksiyon",
-  // Fotoğraf & Video
   "Kamera",
   "Drone",
   "Lens & Aksesuar",
-  // Oyun
   "Oyun Konsolu",
   "Oyun Aksesuarı",
   "Oyun Koltuğu",
-  // Ev Elektroniği
   "Robot Süpürge",
   "Akıllı Ev",
   "Klima",
   "Beyaz Eşya",
-  // Ağ & İnternet
   "Modem & Router",
   "Switch & Hub",
   "Kablo & Adaptör",
-  // Güç & Şarj
   "Powerbank",
   "Şarj Cihazı",
   "UPS",
-  // Yazıcı & Ofis
   "Yazıcı",
   "Tarayıcı",
-  "Projeksiyon",
-  // Aksesuar
   "Telefon Kılıfı",
   "Ekran Koruyucu",
   "Çanta & Sırt Çantası",
+];
+
+const PRODUCT_COLORS = [
+  { label: "Siyah", value: "Siyah", hex: "#111827" },
+  { label: "Beyaz", value: "Beyaz", hex: "#F9FAFB" },
+  { label: "Gri", value: "Gri", hex: "#6B7280" },
+  { label: "Kırmızı", value: "Kırmızı", hex: "#EF4444" },
+  { label: "Mavi", value: "Mavi", hex: "#3B82F6" },
+  { label: "Lacivert", value: "Lacivert", hex: "#1E3A5F" },
+  { label: "Yeşil", value: "Yeşil", hex: "#10B981" },
+  { label: "Sarı", value: "Sarı", hex: "#F59E0B" },
+  { label: "Turuncu", value: "Turuncu", hex: "#F97316" },
+  { label: "Mor", value: "Mor", hex: "#8B5CF6" },
+  { label: "Pembe", value: "Pembe", hex: "#EC4899" },
+  { label: "Gold", value: "Gold", hex: "#D97706" },
+  { label: "Gümüş", value: "Gümüş", hex: "#9CA3AF" },
+  { label: "Rose Gold", value: "Rose Gold", hex: "#F4A4A4" },
 ];
 
 const emptyForm = {
@@ -77,7 +82,11 @@ const emptyForm = {
   description: "",
   isBestSeller: false,
   isActive: true,
+  color: "",
+  colorCode: "",
 };
+
+const emptyVariantForm = { color: "", colorCode: "", stock: "" };
 
 export default function AdminProductsScreen({ navigation }) {
   const [products, setProducts] = useState([]);
@@ -89,6 +98,12 @@ export default function AdminProductsScreen({ navigation }) {
   const [selectedImages, setSelectedImages] = useState([]);
   const [saving, setSaving] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  const [variants, setVariants] = useState([]);
+  const [showVariantModal, setShowVariantModal] = useState(false);
+  const [variantForm, setVariantForm] = useState(emptyVariantForm);
+  const [variantLocalImages, setVariantLocalImages] = useState([]);
+  const [editingVariantIndex, setEditingVariantIndex] = useState(null);
 
   useEffect(() => {
     loadProducts();
@@ -110,6 +125,7 @@ export default function AdminProductsScreen({ navigation }) {
     setEditProduct(null);
     setForm(emptyForm);
     setSelectedImages([]);
+    setVariants([]);
     setShowModal(true);
   };
 
@@ -126,8 +142,19 @@ export default function AdminProductsScreen({ navigation }) {
       description: product.description || "",
       isBestSeller: product.isBestSeller || false,
       isActive: product.isActive !== false,
+      color: product.color || "",
+      colorCode: product.colorCode || "",
     });
     setSelectedImages([]);
+    setVariants(
+      (product.variants || []).map((v) => ({
+        color: v.color,
+        colorCode: v.colorCode,
+        stock: v.stock?.toString() || "0",
+        existingImages: v.images || [],
+        localImages: [],
+      })),
+    );
     setShowModal(true);
   };
 
@@ -151,9 +178,8 @@ export default function AdminProductsScreen({ navigation }) {
     }
   };
 
-  const removeSelectedImage = (index) => {
+  const removeSelectedImage = (index) =>
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const removeExistingImage = async (imageUrl) => {
     if (!editProduct) return;
@@ -180,6 +206,88 @@ export default function AdminProductsScreen({ navigation }) {
     ]);
   };
 
+  const openVariantAdd = () => {
+    setEditingVariantIndex(null);
+    setVariantForm(emptyVariantForm);
+    setVariantLocalImages([]);
+    setShowVariantModal(true);
+  };
+
+  const openVariantEdit = (index) => {
+    const v = variants[index];
+    setEditingVariantIndex(index);
+    setVariantForm({ color: v.color, colorCode: v.colorCode, stock: v.stock });
+    setVariantLocalImages(v.localImages || []);
+    setShowVariantModal(true);
+  };
+
+  const pickVariantImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("İzin gerekli", "Galeri erişimine izin verin");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 4,
+    });
+    if (!result.canceled) {
+      setVariantLocalImages((prev) => [
+        ...prev,
+        ...result.assets.map((a) => a.uri),
+      ]);
+    }
+  };
+
+  const saveVariant = () => {
+    if (!variantForm.color) {
+      Alert.alert("Uyarı", "Renk seçin");
+      return;
+    }
+    if (!variantForm.stock) {
+      Alert.alert("Uyarı", "Stok girin");
+      return;
+    }
+
+    const newVariant = {
+      color: variantForm.color,
+      colorCode: variantForm.colorCode,
+      stock: variantForm.stock,
+      existingImages:
+        editingVariantIndex !== null
+          ? variants[editingVariantIndex].existingImages
+          : [],
+      localImages: variantLocalImages,
+    };
+
+    if (editingVariantIndex !== null) {
+      setVariants((prev) =>
+        prev.map((v, i) => (i === editingVariantIndex ? newVariant : v)),
+      );
+    } else {
+      if (variants.some((v) => v.color === variantForm.color)) {
+        Alert.alert("Uyarı", "Bu renk zaten eklenmiş");
+        return;
+      }
+      setVariants((prev) => [...prev, newVariant]);
+    }
+    setShowVariantModal(false);
+  };
+
+  const removeVariant = (index) => {
+    Alert.alert("Varyantı Sil", "Bu renk varyantı kaldırılacak.", [
+      { text: "İptal", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: () =>
+          setVariants((prev) => prev.filter((_, i) => i !== index)),
+      },
+    ]);
+  };
+
   const handleSave = async () => {
     if (
       !form.name ||
@@ -197,15 +305,44 @@ export default function AdminProductsScreen({ navigation }) {
     setSaving(true);
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, val]) => {
-        formData.append(key, val.toString());
-      });
+
+      formData.append("name", form.name);
+      formData.append("brand", form.brand);
+      formData.append("category", form.category);
+      if (form.color) formData.append("color", form.color);
+      if (form.colorCode) formData.append("colorCode", form.colorCode);
+      formData.append("price", form.price);
+      if (form.oldPrice) formData.append("oldPrice", form.oldPrice);
+      formData.append("stock", form.stock);
+      if (form.discount) formData.append("discount", form.discount);
+      formData.append("description", form.description || "");
+      formData.append("isBestSeller", form.isBestSeller.toString());
+      formData.append("isActive", form.isActive.toString());
+
+      const variantsData = variants.map((v) => ({
+        color: v.color,
+        colorCode: v.colorCode,
+        stock: Number(v.stock),
+      }));
+      formData.append("variants", JSON.stringify(variantsData));
+
       selectedImages.forEach((uri, i) => {
         const ext = uri.split(".").pop() || "jpg";
         formData.append("images", {
           uri,
           name: `product_${i}.${ext}`,
           type: `image/${ext === "jpg" ? "jpeg" : ext}`,
+        });
+      });
+
+      variants.forEach((v, i) => {
+        (v.localImages || []).forEach((uri, j) => {
+          const ext = uri.split(".").pop() || "jpg";
+          formData.append(`variantImages_${i}`, {
+            uri,
+            name: `variant_${i}_${j}.${ext}`,
+            type: `image/${ext === "jpg" ? "jpeg" : ext}`,
+          });
         });
       });
 
@@ -292,6 +429,19 @@ export default function AdminProductsScreen({ navigation }) {
             </Text>
           </View>
         </View>
+        {item.variants?.length > 0 && (
+          <View style={{ flexDirection: "row", gap: 4, marginTop: 4 }}>
+            {item.variants.map((v, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.variantDotSmall,
+                  { backgroundColor: v.colorCode },
+                ]}
+              />
+            ))}
+          </View>
+        )}
       </View>
       <View style={styles.productActions}>
         <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(item)}>
@@ -355,7 +505,6 @@ export default function AdminProductsScreen({ navigation }) {
         </View>
       </View>
 
-      {/* List */}
       {loading ? (
         <ActivityIndicator
           size="large"
@@ -381,14 +530,13 @@ export default function AdminProductsScreen({ navigation }) {
         />
       )}
 
-      {/* Add/Edit Modal */}
+      {/* ===================== ANA ÜRÜN MODAL ===================== */}
       <Modal
         visible={showModal}
         animationType="slide"
         onRequestClose={() => setShowModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          {/* Modal Header */}
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowModal(false)}>
               <Ionicons name="close" size={26} color="#111827" />
@@ -413,14 +561,13 @@ export default function AdminProductsScreen({ navigation }) {
             style={styles.modalBody}
             showsVerticalScrollIndicator={false}
           >
-            {/* Images Section */}
-            <Text style={styles.sectionTitle}>Fotoğraflar</Text>
+            {/* Fotoğraflar */}
+            <Text style={styles.sectionTitle}>Ana Fotoğraflar</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.imagesRow}
             >
-              {/* Mevcut fotoğraflar */}
               {editProduct?.images?.map((img, i) => (
                 <View key={i} style={styles.imgWrapper}>
                   <Image source={{ uri: img }} style={styles.imgThumb} />
@@ -432,7 +579,6 @@ export default function AdminProductsScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               ))}
-              {/* Yeni seçilen fotoğraflar */}
               {selectedImages.map((uri, i) => (
                 <View key={"new-" + i} style={styles.imgWrapper}>
                   <Image source={{ uri }} style={styles.imgThumb} />
@@ -447,14 +593,13 @@ export default function AdminProductsScreen({ navigation }) {
                   </View>
                 </View>
               ))}
-              {/* Ekle butonu */}
               <TouchableOpacity style={styles.addImgBtn} onPress={pickImages}>
                 <Ionicons name="camera-outline" size={28} color="#6366F1" />
                 <Text style={styles.addImgText}>Fotoğraf{"\n"}Ekle</Text>
               </TouchableOpacity>
             </ScrollView>
 
-            {/* Form */}
+            {/* Form Alanları */}
             <Text style={styles.sectionTitle}>Ürün Bilgileri</Text>
 
             <Text style={styles.label}>Ürün Adı *</Text>
@@ -489,6 +634,45 @@ export default function AdminProductsScreen({ navigation }) {
               <Ionicons name="chevron-down" size={20} color="#6B7280" />
             </TouchableOpacity>
 
+            {/* ✅ ÜRÜN RENGİ - Kategori seçicinin hemen altında */}
+            <Text style={styles.label}>Ürün Rengi</Text>
+            <View style={styles.colorsGrid}>
+              {PRODUCT_COLORS.map((color) => {
+                const isSelected = form.color === color.value;
+                return (
+                  <TouchableOpacity
+                    key={color.value}
+                    style={[
+                      styles.colorChip,
+                      isSelected && { borderColor: "#6366F1", borderWidth: 2 },
+                    ]}
+                    onPress={() =>
+                      setForm({
+                        ...form,
+                        color: color.value,
+                        colorCode: color.hex,
+                      })
+                    }
+                  >
+                    <View
+                      style={[styles.colorDot, { backgroundColor: color.hex }]}
+                    />
+                    <Text
+                      style={[
+                        styles.colorChipText,
+                        isSelected && { color: "#6366F1", fontWeight: "700" },
+                      ]}
+                    >
+                      {color.label}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark" size={14} color="#6366F1" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             <View style={styles.row}>
               <View style={styles.halfField}>
                 <Text style={styles.label}>Fiyat (TL) *</Text>
@@ -514,7 +698,7 @@ export default function AdminProductsScreen({ navigation }) {
 
             <View style={styles.row}>
               <View style={styles.halfField}>
-                <Text style={styles.label}>Stok *</Text>
+                <Text style={styles.label}>Genel Stok *</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="0"
@@ -545,8 +729,72 @@ export default function AdminProductsScreen({ navigation }) {
               numberOfLines={4}
             />
 
+            {/* VARYANT / RENK YÖNETİMİ */}
+            <View style={styles.variantHeader}>
+              <Text style={styles.sectionTitle}>Renk Varyantları</Text>
+              <TouchableOpacity
+                style={styles.addVariantBtn}
+                onPress={openVariantAdd}
+              >
+                <Ionicons name="add" size={18} color="#FFF" />
+                <Text style={styles.addVariantBtnText}>Renk Ekle</Text>
+              </TouchableOpacity>
+            </View>
+
+            {variants.length === 0 ? (
+              <View style={styles.noVariant}>
+                <Text style={styles.noVariantText}>
+                  Henüz renk varyantı eklenmedi
+                </Text>
+              </View>
+            ) : (
+              variants.map((v, i) => (
+                <View key={i} style={styles.variantCard}>
+                  <View style={styles.variantCardLeft}>
+                    <View
+                      style={[
+                        styles.variantColorCircle,
+                        { backgroundColor: v.colorCode },
+                      ]}
+                    />
+                    <View>
+                      <Text style={styles.variantColorName}>{v.color}</Text>
+                      <Text style={styles.variantColorMeta}>
+                        Stok: {v.stock} •{" "}
+                        {(v.existingImages?.length || 0) +
+                          (v.localImages?.length || 0)}{" "}
+                        fotoğraf
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.variantCardActions}>
+                    <TouchableOpacity
+                      style={styles.variantEditBtn}
+                      onPress={() => openVariantEdit(i)}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={18}
+                        color="#3B82F6"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.variantDeleteBtn}
+                      onPress={() => removeVariant(i)}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color="#EF4444"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+
             {/* Toggles */}
-            <View style={styles.toggleRow}>
+            <View style={[styles.toggleRow, { marginTop: 16 }]}>
               <View>
                 <Text style={styles.toggleLabel}>Çok Satan</Text>
                 <Text style={styles.toggleSub}>Ana sayfada öne çıkar</Text>
@@ -587,7 +835,140 @@ export default function AdminProductsScreen({ navigation }) {
         </SafeAreaView>
       </Modal>
 
-      {/* Category Picker Modal */}
+      {/* ===================== VARYANT MODAL ===================== */}
+      <Modal
+        visible={showVariantModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowVariantModal(false)}
+      >
+        <View style={styles.variantModalOverlay}>
+          <View style={styles.variantModalSheet}>
+            <View style={styles.variantModalHeader}>
+              <Text style={styles.variantModalTitle}>
+                {editingVariantIndex !== null
+                  ? "Varyantı Düzenle"
+                  : "Renk Varyantı Ekle"}
+              </Text>
+              <TouchableOpacity onPress={() => setShowVariantModal(false)}>
+                <Ionicons name="close" size={24} color="#111827" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ padding: 20 }}
+            >
+              <Text style={styles.label}>Renk Seçin *</Text>
+              <View style={styles.colorsGrid}>
+                {PRODUCT_COLORS.map((color) => {
+                  const isSelected = variantForm.color === color.value;
+                  return (
+                    <TouchableOpacity
+                      key={color.value}
+                      style={[
+                        styles.colorChip,
+                        isSelected && {
+                          borderColor: "#6366F1",
+                          borderWidth: 2,
+                        },
+                      ]}
+                      onPress={() =>
+                        setVariantForm({
+                          ...variantForm,
+                          color: color.value,
+                          colorCode: color.hex,
+                        })
+                      }
+                    >
+                      <View
+                        style={[
+                          styles.colorDot,
+                          { backgroundColor: color.hex },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.colorChipText,
+                          isSelected && { color: "#6366F1", fontWeight: "700" },
+                        ]}
+                      >
+                        {color.label}
+                      </Text>
+                      {isSelected && (
+                        <Ionicons name="checkmark" size={14} color="#6366F1" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.label}>Bu Renk İçin Stok *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                value={variantForm.stock}
+                onChangeText={(v) =>
+                  setVariantForm({ ...variantForm, stock: v })
+                }
+                keyboardType="numeric"
+              />
+
+              <Text style={styles.label}>Bu Renk İçin Fotoğraflar</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 16 }}
+              >
+                {editingVariantIndex !== null &&
+                  variants[editingVariantIndex]?.existingImages?.map(
+                    (img, i) => (
+                      <View key={"ex-" + i} style={styles.imgWrapper}>
+                        <Image source={{ uri: img }} style={styles.imgThumb} />
+                      </View>
+                    ),
+                  )}
+                {variantLocalImages.map((uri, i) => (
+                  <View key={"vl-" + i} style={styles.imgWrapper}>
+                    <Image source={{ uri }} style={styles.imgThumb} />
+                    <TouchableOpacity
+                      style={styles.imgRemove}
+                      onPress={() =>
+                        setVariantLocalImages((prev) =>
+                          prev.filter((_, idx) => idx !== i),
+                        )
+                      }
+                    >
+                      <Ionicons name="close-circle" size={20} color="#EF4444" />
+                    </TouchableOpacity>
+                    <View style={styles.newBadge}>
+                      <Text style={styles.newBadgeText}>Yeni</Text>
+                    </View>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.addImgBtn}
+                  onPress={pickVariantImages}
+                >
+                  <Ionicons name="camera-outline" size={28} color="#6366F1" />
+                  <Text style={styles.addImgText}>Fotoğraf{"\n"}Ekle</Text>
+                </TouchableOpacity>
+              </ScrollView>
+
+              <TouchableOpacity
+                style={styles.saveVariantBtn}
+                onPress={saveVariant}
+              >
+                <Text style={styles.saveVariantBtnText}>
+                  {editingVariantIndex !== null ? "Güncelle" : "Varyantı Ekle"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Kategori Picker */}
       <Modal
         visible={showCategoryPicker}
         transparent
@@ -718,6 +1099,13 @@ const styles = StyleSheet.create({
   productPrice: { fontSize: 14, fontWeight: "bold", color: "#10B981" },
   stockBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   stockText: { fontSize: 11, fontWeight: "600" },
+  variantDotSmall: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
   productActions: {
     justifyContent: "center",
     alignItems: "center",
@@ -749,7 +1137,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   addFirstText: { color: "#FFF", fontWeight: "bold" },
-  // Modal
   modalContainer: { flex: 1, backgroundColor: "#F9FAFB" },
   modalHeader: {
     flexDirection: "row",
@@ -836,6 +1223,129 @@ const styles = StyleSheet.create({
   categorySelectorText: { fontSize: 15, color: "#111827" },
   row: { flexDirection: "row", gap: 12 },
   halfField: { flex: 1 },
+  variantHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  addVariantBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#6366F1",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  addVariantBtnText: { color: "#FFF", fontSize: 13, fontWeight: "600" },
+  noVariant: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  noVariantText: { color: "#9CA3AF", fontSize: 14 },
+  variantCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 12,
+    marginBottom: 8,
+  },
+  variantCardLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  variantColorCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  variantColorName: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  variantColorMeta: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+  variantCardActions: { flexDirection: "row", gap: 8 },
+  variantEditBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  variantDeleteBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  variantModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  variantModalSheet: {
+    backgroundColor: "#F9FAFB",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "90%",
+    paddingBottom: 20,
+  },
+  variantModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  variantModalTitle: { fontSize: 18, fontWeight: "bold", color: "#111827" },
+  saveVariantBtn: {
+    backgroundColor: "#6366F1",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  saveVariantBtnText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
+  colorsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 14,
+  },
+  colorChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFF",
+  },
+  colorDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  colorChipText: { fontSize: 13, color: "#374151" },
   toggleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -869,7 +1379,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   toggleThumbOn: { alignSelf: "flex-end" },
-  // Category Picker
   pickerOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",

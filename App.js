@@ -8,6 +8,7 @@ import { CartProvider } from "./src/context/CartContext";
 import { FavoriteProvider } from "./src/context/FavoriteContext";
 import { AdminProvider } from "./src/context/AdminContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserAPI } from "./src/api/endpoints";
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState(null);
@@ -15,18 +16,32 @@ export default function App() {
   useEffect(() => {
     checkLoginStatus();
   }, []);
-
+  // App.js içindeki checkLoginStatus fonksiyonunu bu şekilde güncelle
   const checkLoginStatus = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       const adminToken = await AsyncStorage.getItem("adminToken");
-      const courierToken = await AsyncStorage.getItem("courierToken"); // YENİ
+      const courierToken = await AsyncStorage.getItem("courierToken");
 
-      if (adminToken) setInitialRoute("AdminPanel");
-      else if (courierToken)
-        setInitialRoute("CourierDashboard"); // YENİ
-      else if (token) setInitialRoute("MainTabs");
-      else setInitialRoute("Welcome");
+      // Sıralama ve kontrol mantığı
+      if (adminToken) {
+        setInitialRoute("AdminPanel");
+      } else if (courierToken) {
+        setInitialRoute("CourierDashboard");
+      } else if (token) {
+        try {
+          // Kullanıcı tokenı varsa profil kontrolü yap
+          await UserAPI.getProfile();
+          setInitialRoute("MainTabs");
+        } catch (e) {
+          // Token geçersizse sil ve hoşgeldin ekranına at
+          await AsyncStorage.removeItem("userToken");
+          setInitialRoute("Welcome");
+        }
+      } else {
+        // Hiçbir token yoksa Welcome açılır
+        setInitialRoute("Welcome");
+      }
     } catch (e) {
       setInitialRoute("Welcome");
     }

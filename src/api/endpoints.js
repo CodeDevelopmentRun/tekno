@@ -16,13 +16,15 @@ export const CategoryAPI = {
 export const UserAPI = {
   login: (credentials) => api.post("/auth/login", credentials),
   register: (data) => api.post("/auth/register", data),
-  getProfile: () => api.get("/auth/profile"), // /user/profile → /auth/profile
-  updateProfile: (data) => api.put("/auth/profile", data), // /user/profile → /auth/profile
+  getProfile: () => api.get("/auth/profile"),
+  updateProfile: (data) => api.put("/auth/profile", data),
 };
 
 export const CartAPI = {
   get: () => api.get("/cart"),
-  add: (productId, quantity) => api.post("/cart", { productId, quantity }),
+  // ✅ variant parametresi eklendi
+  add: (productId, quantity, variant = null) =>
+    api.post("/cart", { productId, quantity, variant }),
   update: (itemId, quantity) => api.put(`/cart/${itemId}`, { quantity }),
   remove: (itemId) => api.delete(`/cart/${itemId}`),
   clear: () => api.delete("/cart"),

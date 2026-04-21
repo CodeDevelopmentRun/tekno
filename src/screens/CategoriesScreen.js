@@ -23,7 +23,7 @@ const CATEGORIES = [
   {
     name: "Bilgisayar",
     image:
-      "https://www.beko.com.tr/media/resize/9243831600_MDM2_LOW_1.png/530Wx530H/image.webp",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFZAR8PgV8nZu7NSuxqGUt23hixSBDSv9Bfg&s",
   },
   {
     name: "Bilgisayar Parçaları",
@@ -89,7 +89,7 @@ const CATEGORIES = [
   {
     name: "Modem & Router",
     image:
-      "https://dlcdnwebimgs.asus.com/gain/d1539132-be5b-4884-80fd-e9873d741421/",
+      "https://www.turk.net/blog/wp-content/uploads/modem-ve-router-nedir-aralarindaki-farklar-nelerdir-2x.jpg",
   },
   {
     name: "Güç & Şarj",
@@ -105,23 +105,67 @@ const CATEGORIES = [
 
 export default function CategoriesScreen({ navigation, route }) {
   const { isDarkMode, colors } = useTheme();
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // 1. HomeScreen'den gelen searchQuery'yi başlangıç değeri olarak al
+  const [searchQuery, setSearchQuery] = useState(
+    route.params?.searchQuery || "",
+  );
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Ürün araması için yeni state'ler
+  const [allProducts, setAllProducts] = useState([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
 
   const tp = isDarkMode ? "#FFFFFF" : "#111827";
   const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
   const bg = isDarkMode ? "#111827" : "#FFFFFF";
   const border = isDarkMode ? "rgba(255,255,255,0.1)" : "#F0F0F0";
 
+  // 2. Sayfa her açıldığında (HomeScreen'den gelindiğinde) yeni query'yi yakala
+  useEffect(() => {
+    if (route.params?.searchQuery) {
+      setSearchQuery(route.params.searchQuery);
+    }
+  }, [route.params?.searchQuery]);
+
+  // 3. searchQuery değiştiğinde ürünleri API'den çekip filtrele
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setAllProducts([]);
+      return;
+    }
+    const fetchProducts = async () => {
+      setLoadingSearch(true);
+      try {
+        const res = await api.get("/products");
+        const all = res.data.data || [];
+        setAllProducts(
+          all.filter(
+            (p) =>
+              p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.brand?.toLowerCase().includes(searchQuery.toLowerCase()),
+          ),
+        );
+      } catch (e) {
+        console.error("Ürün arama hatası:", e);
+      } finally {
+        setLoadingSearch(false);
+      }
+    };
+    fetchProducts();
+  }, [searchQuery]);
+
   const filteredCategories = CATEGORIES.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleCategoryPress = (category) => {
-    setSelectedCategory(category);
-    loadByCategory(category.name);
+    navigation.navigate("BrandsScreen", {
+      categoryName: category.name,
+      categoryImage: category.image,
+    });
   };
 
   const loadByCategory = async (categoryName) => {
@@ -231,10 +275,18 @@ export default function CategoriesScreen({ navigation, route }) {
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: border }]}>
-          <Text style={[styles.title, { color: tp }]}>Kategoriler</Text>
-          <TouchableOpacity>
-            <Ionicons name="search-outline" size={26} color={tp} />
-          </TouchableOpacity>
+          <Text style={[styles.title, { color: tp }]}>
+            {searchQuery.trim() ? "Arama Sonuçları" : "Kategoriler"}
+          </Text>
+          {searchQuery.trim() ? (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close" size={26} color={tp} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity>
+              <Ionicons name="search-outline" size={26} color={tp} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Search */}
@@ -247,7 +299,7 @@ export default function CategoriesScreen({ navigation, route }) {
           <Ionicons name="search-outline" size={18} color={tm} />
           <TextInput
             style={[styles.searchInput, { color: tp }]}
-            placeholder="Kategori ara..."
+            placeholder="Ürün, marka veya kategori ara..."
             placeholderTextColor={tm}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -259,13 +311,41 @@ export default function CategoriesScreen({ navigation, route }) {
           )}
         </View>
 
-        {/* Category List */}
-        <FlatList
-          data={filteredCategories}
-          keyExtractor={(item) => item.name}
-          renderItem={renderCategoryItem}
-          showsVerticalScrollIndicator={false}
-        />
+        {/* 4. searchQuery varsa ürün listesi, yoksa kategori listesi göster */}
+        {searchQuery.trim() ? (
+          loadingSearch ? (
+            <ActivityIndicator
+              size="large"
+              color={colors.primary}
+              style={{ marginTop: 40 }}
+            />
+          ) : allProducts.length === 0 ? (
+            <View style={styles.empty}>
+              <Ionicons name="search-outline" size={60} color={tm} />
+              <Text style={[styles.emptyTitle, { color: tp }]}>
+                Ürün bulunamadı
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: tm }]}>
+                "{searchQuery}" için sonuç yok
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={allProducts}
+              keyExtractor={(item) => item._id}
+              renderItem={renderProduct}
+              contentContainerStyle={{ paddingVertical: 8 }}
+              showsVerticalScrollIndicator={false}
+            />
+          )
+        ) : (
+          <FlatList
+            data={filteredCategories}
+            keyExtractor={(item) => item.name}
+            renderItem={renderCategoryItem}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </SafeAreaView>
     </View>
   );
@@ -324,4 +404,5 @@ const styles = StyleSheet.create({
   productPrice: { fontSize: 14, fontWeight: "bold", color: "#10B981" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: "600" },
+  emptySubtitle: { fontSize: 13 },
 });

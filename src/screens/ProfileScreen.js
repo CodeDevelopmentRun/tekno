@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,29 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { AuthContext } from "../context/AuthContext";
+import { FavoriteContext } from "../context/FavoriteContext";
+import { CartContext } from "../context/CartContext";
+import api from "../api/axiosConfig";
 
 export default function ProfileScreen({ navigation }) {
   const { isDarkMode, colors } = useTheme();
   const { user, logout } = useContext(AuthContext);
+  const { favorites } = useContext(FavoriteContext);
+  const { cartItems } = useContext(CartContext);
+  const [orderCount, setOrderCount] = useState(0);
+
+  useEffect(() => {
+    if (user) fetchOrderCount();
+  }, [user]);
+
+  const fetchOrderCount = async () => {
+    try {
+      const res = await api.get("/orders");
+      setOrderCount(res.data.data?.length || 0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert("Çıkış Yap", "Çıkış yapmak istediğinizden emin misiniz?", [
@@ -31,9 +50,24 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const stats = [
-    { icon: "bag-outline", value: "24", label: "Sipariş", color: "#6366F1" },
-    { icon: "heart", value: "89", label: "Favori", color: "#EC4899" },
-    { icon: "star", value: "4.8", label: "Puan", color: "#F59E0B" },
+    {
+      icon: "bag-outline",
+      value: String(orderCount),
+      label: "Sipariş",
+      color: "#6366F1",
+    },
+    {
+      icon: "heart",
+      value: String(favorites?.length || 0),
+      label: "Favori",
+      color: "#EC4899",
+    },
+    {
+      icon: "cart-outline",
+      value: String(cartItems?.length || 0),
+      label: "Sepet",
+      color: "#F59E0B",
+    },
   ];
 
   const menuSections = [
@@ -46,7 +80,7 @@ export default function ProfileScreen({ navigation }) {
           subtitle: "Sipariş geçmişinizi görüntüleyin",
           color: "#6366F1",
           bgColor: "rgba(99,102,241,0.15)",
-          onPress: () => navigation.navigate("Orders"), // ✅ EKLENDI
+          onPress: () => navigation.navigate("Orders"),
         },
         {
           icon: "location-outline",

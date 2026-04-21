@@ -19,7 +19,6 @@ export default function CartScreen({ navigation }) {
     useContext(CartContext);
 
   const tp = isDarkMode ? "#FFFFFF" : "#111827";
-  const ts = isDarkMode ? "#DDDDDD" : "#374151";
   const tm = isDarkMode ? "#BBBBBB" : "#6B7280";
   const cardBg = isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF";
   const cardBorder = isDarkMode ? "rgba(255,255,255,0.15)" : "#E5E7EB";
@@ -36,83 +35,116 @@ export default function CartScreen({ navigation }) {
     ]);
   };
 
-  const renderItem = ({ item }) => (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: cardBg, borderColor: cardBorder },
-      ]}
-    >
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate("ProductDetail", { productId: item.product._id })
-        }
+  const renderItem = ({ item }) => {
+    // ✅ Varyanta özel görsel varsa onu göster, yoksa ana görseli kullan
+    const variantColor = item.variant?.color;
+    const variantImages = item.product?.variants?.find(
+      (v) => v.color === variantColor,
+    )?.images;
+    const displayImage =
+      variantImages?.length > 0
+        ? variantImages[0]
+        : item.product?.images?.[0] ||
+          "https://picsum.photos/200?random=" + item.product?._id;
+
+    return (
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: cardBg, borderColor: cardBorder },
+        ]}
       >
-        <Image
-          source={{
-            uri:
-              item.product?.images?.[0] ||
-              "https://picsum.photos/200?random=" + item.product?._id,
-          }}
-          style={styles.image}
-        />
-      </TouchableOpacity>
-      <View style={styles.info}>
-        <Text style={[styles.brand, { color: colors.primary }]}>
-          {item.product?.brand}
-        </Text>
-        <Text style={[styles.name, { color: tp }]} numberOfLines={2}>
-          {item.product?.name}
-        </Text>
-        <Text style={styles.price}>
-          {(item.price * item.quantity).toLocaleString()} TL
-        </Text>
-        <View style={styles.qtyRow}>
-          <TouchableOpacity
-            style={[
-              styles.qtyBtn,
-              { backgroundColor: colors.background, borderColor: cardBorder },
-            ]}
-            onPress={() => {
-              if (item.quantity <= 1) removeFromCart(item._id);
-              else updateQuantity(item._id, item.quantity - 1);
-            }}
-          >
-            <Ionicons
-              name={item.quantity <= 1 ? "trash-outline" : "remove"}
-              size={16}
-              color={item.quantity <= 1 ? "#EF4444" : tp}
-            />
-          </TouchableOpacity>
-          <Text style={[styles.qtyText, { color: tp }]}>{item.quantity}</Text>
-          <TouchableOpacity
-            style={[
-              styles.qtyBtn,
-              { backgroundColor: colors.background, borderColor: cardBorder },
-            ]}
-            onPress={() => {
-              if (item.quantity >= item.product?.stock) {
-                Alert.alert(
-                  "Yetersiz Stok",
-                  `Bu üründen en fazla ${item.product?.stock} adet ekleyebilirsiniz.`,
-                );
-                return;
-              }
-              updateQuantity(item._id, item.quantity + 1);
-            }}
-          >
-            <Ionicons name="add" size={16} color={tp} />
-          </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("ProductDetail", {
+              productId: item.product._id,
+            })
+          }
+        >
+          <Image source={{ uri: displayImage }} style={styles.image} />
+        </TouchableOpacity>
+
+        <View style={styles.info}>
+          <Text style={[styles.brand, { color: colors.primary }]}>
+            {item.product?.brand}
+          </Text>
+          <Text style={[styles.name, { color: tp }]} numberOfLines={2}>
+            {item.product?.name}
+          </Text>
+
+          {/* ✅ Renk badge'i */}
+          {item.variant?.color && (
+            <View style={styles.variantBadge}>
+              <View
+                style={[
+                  styles.variantDot,
+                  { backgroundColor: item.variant.colorCode },
+                ]}
+              />
+              <Text style={[styles.variantText, { color: tm }]}>
+                {item.variant.color}
+              </Text>
+            </View>
+          )}
+
+          <Text style={styles.price}>
+            {(item.price * item.quantity).toLocaleString()} TL
+          </Text>
+
+          <View style={styles.qtyRow}>
+            <TouchableOpacity
+              style={[
+                styles.qtyBtn,
+                { backgroundColor: colors.background, borderColor: cardBorder },
+              ]}
+              onPress={() => {
+                if (item.quantity <= 1) removeFromCart(item._id);
+                else updateQuantity(item._id, item.quantity - 1);
+              }}
+            >
+              <Ionicons
+                name={item.quantity <= 1 ? "trash-outline" : "remove"}
+                size={16}
+                color={item.quantity <= 1 ? "#EF4444" : tp}
+              />
+            </TouchableOpacity>
+            <Text style={[styles.qtyText, { color: tp }]}>{item.quantity}</Text>
+            <TouchableOpacity
+              style={[
+                styles.qtyBtn,
+                { backgroundColor: colors.background, borderColor: cardBorder },
+              ]}
+              onPress={() => {
+                // ✅ Varyant stoğu varsa onu kontrol et
+                const maxStock = item.variant?.color
+                  ? item.product?.variants?.find(
+                      (v) => v.color === item.variant.color,
+                    )?.stock
+                  : item.product?.stock;
+                if (item.quantity >= maxStock) {
+                  Alert.alert(
+                    "Yetersiz Stok",
+                    `Bu üründen en fazla ${maxStock} adet ekleyebilirsiniz.`,
+                  );
+                  return;
+                }
+                updateQuantity(item._id, item.quantity + 1);
+              }}
+            >
+              <Ionicons name="add" size={16} color={tp} />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.removeBtn}
+          onPress={() => removeFromCart(item._id)}
+        >
+          <Ionicons name="close" size={20} color={tm} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.removeBtn}
-        onPress={() => removeFromCart(item._id)}
-      >
-        <Ionicons name="close" size={20} color={tm} />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -198,10 +230,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
   },
-  image: { width: 100, height: 110, resizeMode: "cover" },
+  image: { width: 100, height: 120, resizeMode: "cover" },
   info: { flex: 1, padding: 12 },
   brand: { fontSize: 11, fontWeight: "600", marginBottom: 3 },
-  name: { fontSize: 14, fontWeight: "600", marginBottom: 6, lineHeight: 20 },
+  name: { fontSize: 14, fontWeight: "600", marginBottom: 4, lineHeight: 20 },
+  // ✅ Renk badge stilleri
+  variantBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 6,
+  },
+  variantDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  variantText: { fontSize: 12 },
+  //
   price: {
     fontSize: 16,
     fontWeight: "bold",

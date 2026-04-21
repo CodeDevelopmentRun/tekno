@@ -1,4 +1,3 @@
-import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -11,50 +10,64 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { AdminContext } from "../context/AdminContext";
 import { COLORS } from "../utils/colors";
-
+import React, { useContext, useState, useEffect } from "react";
 const { width } = Dimensions.get("window");
 
 export default function AdminDashboardScreen({ navigation }) {
   const { adminUser, adminLogout } = useContext(AdminContext);
 
-  const stats = [
-    {
-      id: 1,
-      title: "Toplam Kullanıcı",
-      value: "1,248",
-      change: "+12%",
-      icon: "people",
-      color: COLORS.adminInfo,
-      bgColor: "#EFF6FF",
-    },
-    {
-      id: 2,
-      title: "Toplam Ürün",
-      value: "156",
-      change: "+8%",
-      icon: "cube",
-      color: COLORS.adminSuccess,
-      bgColor: "#F0FDF4",
-    },
-    {
-      id: 3,
-      title: "Toplam Sipariş",
-      value: "892",
-      change: "-5%",
-      icon: "cart",
-      color: COLORS.adminWarning,
-      bgColor: "#FFFBEB",
-    },
-    {
-      id: 4,
-      title: "Toplam Gelir",
-      value: "₺125,430",
-      change: "+15%",
-      icon: "cash",
-      color: COLORS.adminPrimary,
-      bgColor: "#F5F3FF",
-    },
-  ];
+  const [stats, setStats] = useState([]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("http://10.0.2.2:5000/api/admin/dashboard-stats");
+      const data = await res.json();
+      setStats([
+        {
+          id: 1,
+          title: "Toplam Kullanıcı",
+          value: data.totalUsers.toString(),
+          change: "+0%",
+          icon: "people",
+          color: COLORS.adminInfo,
+          bgColor: "#EFF6FF",
+        },
+        {
+          id: 2,
+          title: "Toplam Ürün",
+          value: data.totalProducts.toString(),
+          change: "+0%",
+          icon: "cube",
+          color: COLORS.adminSuccess,
+          bgColor: "#F0FDF4",
+        },
+        {
+          id: 3,
+          title: "Toplam Sipariş",
+          value: data.totalOrders.toString(),
+          change: "+0%",
+          icon: "cart",
+          color: COLORS.adminWarning,
+          bgColor: "#FFFBEB",
+        },
+        {
+          id: 4,
+          title: "Toplam Gelir",
+          value: "₺" + data.totalRevenue.toLocaleString("tr-TR"),
+          change: "+0%",
+          icon: "cash",
+          color: COLORS.adminPrimary,
+          bgColor: "#F5F3FF",
+        },
+      ]);
+    } catch (err) {
+      console.error("Stats yüklenemedi:", err);
+    }
+  };
 
   const menuItems = [
     {
