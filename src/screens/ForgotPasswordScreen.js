@@ -169,7 +169,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: "#F3F4F6",
   },
   keyboardView: {
     flex: 1,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: "#F3F4F6",
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,

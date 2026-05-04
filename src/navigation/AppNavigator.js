@@ -3,7 +3,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
-// Ekranları import ediyoruz (Yolların doğruluğundan emin ol)
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CartScreen from "../screens/CartScreen";
@@ -28,10 +27,132 @@ import KargocuDashboardScreen from "../screens/KargocuDashboardScreen";
 import ReviewScreen from "../screens/ReviewScreen";
 import BrandsScreen from "../screens/BrandsScreen";
 import ProductsByBrandScreen from "../screens/ProductsByBrandScreen";
+import AdminUsersScreen from "../screens/AdminUsersScreen";
+import AdminSettingsScreen from "../screens/AdminSettingsScreen";
+import AdminCategoriesScreen from "../screens/AdminCategoriesScreen";
+import AdminOrdersScreen from "../screens/AdminOrdersScreen";
+import AddressScreen from "../screens/AddressScreen";
+import SavedCardsScreen from "../screens/SavedCardsScreen";
+import SupportScreen from "../screens/SupportScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// ✅ Home Stack
+const HomeStackNavigator = createNativeStackNavigator();
+function HomeStack() {
+  return (
+    <HomeStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStackNavigator.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStackNavigator.Screen name="BrandsScreen" component={BrandsScreen} />
+      <HomeStackNavigator.Screen
+        name="ProductsByBrand"
+        component={ProductsByBrandScreen}
+      />
+      <HomeStackNavigator.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+      />
+      <HomeStackNavigator.Screen name="Review" component={ReviewScreen} />
+    </HomeStackNavigator.Navigator>
+  );
+}
+
+// ✅ Categories Stack
+const CategoriesStackNavigator = createNativeStackNavigator();
+function CategoriesStack() {
+  return (
+    <CategoriesStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+      <CategoriesStackNavigator.Screen
+        name="CategoriesMain"
+        component={CategoriesScreen}
+      />
+      <CategoriesStackNavigator.Screen
+        name="BrandsScreen"
+        component={BrandsScreen}
+      />
+      <CategoriesStackNavigator.Screen
+        name="ProductsByBrand"
+        component={ProductsByBrandScreen}
+      />
+      <CategoriesStackNavigator.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+      />
+    </CategoriesStackNavigator.Navigator>
+  );
+}
+
+// ✅ Favorites Stack
+const FavoritesStackNavigator = createNativeStackNavigator();
+function FavoritesStack() {
+  return (
+    <FavoritesStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+      <FavoritesStackNavigator.Screen
+        name="FavoritesMain"
+        component={FavoritesScreen}
+      />
+      <FavoritesStackNavigator.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+      />
+    </FavoritesStackNavigator.Navigator>
+  );
+}
+
+// ✅ Cart Stack
+const CartStackNavigator = createNativeStackNavigator();
+function CartStack() {
+  return (
+    <CartStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+      <CartStackNavigator.Screen name="CartMain" component={CartScreen} />
+      <CartStackNavigator.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+      />
+      <CartStackNavigator.Screen name="Checkout" component={CheckoutScreen} />
+      <CartStackNavigator.Screen
+        name="OrderSuccess"
+        component={OrderSuccessScreen}
+      />
+      <CartStackNavigator.Screen name="Orders" component={OrdersScreen} />
+      <CartStackNavigator.Screen name="Home" component={HomeScreen} />
+    </CartStackNavigator.Navigator>
+  );
+}
+
+// ✅ Profile Stack
+const ProfileStackNavigator = createNativeStackNavigator();
+function ProfileStack() {
+  return (
+    <ProfileStackNavigator.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStackNavigator.Screen
+        name="ProfileMain"
+        component={ProfileScreen}
+      />
+      <ProfileStackNavigator.Screen name="Orders" component={OrdersScreen} />
+      <ProfileStackNavigator.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+      />
+      <ProfileStackNavigator.Screen name="Review" component={ReviewScreen} />
+      <ProfileStackNavigator.Screen
+        name="Adreslerim"
+        component={AddressScreen}
+      />
+
+      {/* 🛠️ DÜZELTİLDİ: Tırnak işaretleri kaldırıldı */}
+      <ProfileStackNavigator.Screen name="Support" component={SupportScreen} />
+
+      <ProfileStackNavigator.Screen
+        name="SavedCards"
+        component={SavedCardsScreen}
+      />
+    </ProfileStackNavigator.Navigator>
+  );
+}
+
+// ✅ Main Tabs
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -53,7 +174,7 @@ function MainTabs() {
         tabBarActiveTintColor: "#FF6B35",
         tabBarInactiveTintColor: "#8E8E93",
         tabBarStyle: {
-          height: 90, // Yüksekliği biraz optimize ettim
+          height: 90,
           paddingBottom: 15,
           paddingTop: 15,
           backgroundColor: "#FFFFFF",
@@ -64,58 +185,47 @@ function MainTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
-      <Tab.Screen name="Favorilerim" component={FavoritesScreen} />
-      <Tab.Screen name="Sepetim" component={CartScreen} />
-      <Tab.Screen name="Kategoriler" component={CategoriesScreen} />
-      <Tab.Screen name="Hesabım" component={ProfileScreen} />
+      <Tab.Screen name="Ana Sayfa" component={HomeStack} />
+      <Tab.Screen name="Favorilerim" component={FavoritesStack} />
+      <Tab.Screen name="Sepetim" component={CartStack} />
+      <Tab.Screen name="Kategoriler" component={CategoriesStack} />
+      <Tab.Screen name="Hesabım" component={ProfileStack} />
     </Tab.Navigator>
   );
 }
 
-// initialRoute prop'u dışarıdan gelmezse varsayılan olarak "Welcome" ekranı açılır
+// ✅ Root App Navigator
 export default function AppNavigator({ initialRoute = "Welcome" }) {
   return (
     <Stack.Navigator
-      // Eğer uygulama hala kargocuda açılıyorsa,
-      // aşağıyı geçici olarak initialRouteName="Welcome" yapıp dene.
       initialRouteName={initialRoute}
-      screenOptions={{
-        headerShown: false,
-        animation: "slide_from_right", // Geçiş efekti ekledik
-      }}
+      screenOptions={{ headerShown: false, animation: "slide_from_right" }}
     >
-      {/* --- MÜŞTERİ / GENEL EKRANLAR --- */}
+      {/* AUTH EKRANLARI */}
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+
+      {/* ✅ MainTabs */}
       <Stack.Screen name="MainTabs" component={MainTabs} />
-      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-      <Stack.Screen name="Checkout" component={CheckoutScreen} />
-      <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
-      <Stack.Screen name="Orders" component={OrdersScreen} />
-      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
-      <Stack.Screen name="Review" component={ReviewScreen} />
-      <Stack.Screen name="BrandsScreen" component={BrandsScreen} />
-      <Stack.Screen name="ProductsByBrand" component={ProductsByBrandScreen} />
 
       {/* --- ADMIN EKRANLARI --- */}
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminPanel" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />
+      <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+      <Stack.Screen name="AdminCategories" component={AdminCategoriesScreen} />
+      <Stack.Screen name="AdminOrders" component={AdminOrdersScreen} />
 
       {/* --- KARGOCU EKRANLARI --- */}
       <Stack.Screen name="KargocuLogin" component={KargocuLoginScreen} />
       <Stack.Screen
         name="CourierDashboard"
         component={KargocuDashboardScreen}
-        options={{
-          headerShown: false,
-          // gestureEnabled: false, // Bunu kapattım ki yanlışlıkla geri çıkınca uygulama çökmesin
-        }}
       />
     </Stack.Navigator>
   );

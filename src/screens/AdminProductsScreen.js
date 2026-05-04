@@ -414,7 +414,7 @@ export default function AdminProductsScreen({ navigation }) {
         <Text style={styles.productCategory}>{item.category}</Text>
         <View style={styles.productMeta}>
           <Text style={styles.productPrice}>
-            {item.price?.toLocaleString()} TL
+            {item.price?.toLocaleString("tr-TR")} TL{" "}
           </Text>
           <View
             style={[

@@ -144,13 +144,21 @@ export default function OrderSuccessScreen({ navigation, route }) {
             { backgroundColor: colors.background, borderColor: cardBorder },
           ]}
         >
+          {/* Siparişlerim Butonu - Hesabım sekmesine ve içindeki Orders'a yönlendirir */}
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate("Orders")}
+            onPress={() =>
+              navigation.navigate("MainTabs", {
+                screen: "Hesabım",
+                params: { screen: "Orders" },
+              })
+            }
           >
             <Ionicons name="list-outline" size={20} color="#FFF" />
             <Text style={styles.btnText}>Siparişlerim</Text>
           </TouchableOpacity>
+
+          {/* Ana Sayfa Butonu - Doğrudan Ana Sayfa sekmesine yönlendirir */}
           <TouchableOpacity
             style={[
               styles.btn,
@@ -160,7 +168,9 @@ export default function OrderSuccessScreen({ navigation, route }) {
                 borderColor: cardBorder,
               },
             ]}
-            onPress={() => navigation.navigate("MainTabs")}
+            onPress={() =>
+              navigation.navigate("MainTabs", { screen: "Ana Sayfa" })
+            }
           >
             <Ionicons name="home-outline" size={20} color={tp} />
             <Text style={[styles.btnText, { color: tp }]}>Ana Sayfa</Text>

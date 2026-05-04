@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,99 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { CartContext } from "../context/CartContext";
 import api from "../api/axiosConfig";
+
+// 81 İl Listesi
+const CITIES = [
+  "Adana",
+  "Adıyaman",
+  "Afyonkarahisar",
+  "Ağrı",
+  "Amasya",
+  "Ankara",
+  "Antalya",
+  "Artvin",
+  "Aydın",
+  "Balıkesir",
+  "Bilecik",
+  "Bingöl",
+  "Bitlis",
+  "Bolu",
+  "Burdur",
+  "Bursa",
+  "Çanakkale",
+  "Çankırı",
+  "Çorum",
+  "Denizli",
+  "Diyarbakır",
+  "Edirne",
+  "Elazığ",
+  "Erzincan",
+  "Erzurum",
+  "Eskişehir",
+  "Gaziantep",
+  "Giresun",
+  "Gümüşhane",
+  "Hakkari",
+  "Hatay",
+  "Isparta",
+  "Mersin",
+  "İstanbul",
+  "İzmir",
+  "Kars",
+  "Kastamonu",
+  "Kayseri",
+  "Kırklareli",
+  "Kırşehir",
+  "Kocaeli",
+  "Konya",
+  "Kütahya",
+  "Malatya",
+  "Manisa",
+  "Kahramanmaraş",
+  "Mardin",
+  "Muğla",
+  "Muş",
+  "Nevşehir",
+  "Niğde",
+  "Ordu",
+  "Rize",
+  "Sakarya",
+  "Samsun",
+  "Siirt",
+  "Sinop",
+  "Sivas",
+  "Tekirdağ",
+  "Tokat",
+  "Trabzon",
+  "Tunceli",
+  "Şanlıurfa",
+  "Uşak",
+  "Van",
+  "Yozgat",
+  "Zonguldak",
+  "Aksaray",
+  "Bayburt",
+  "Karaman",
+  "Kırıkkale",
+  "Batman",
+  "Şırnak",
+  "Bartın",
+  "Ardahan",
+  "Iğdır",
+  "Yalova",
+  "Karabük",
+  "Kilis",
+  "Osmaniye",
+  "Düzce",
+];
 
 const InputField = ({
   label,
@@ -40,7 +127,7 @@ const InputField = ({
       value={form[field]}
       onChangeText={(v) => handleChange(field, v)}
       keyboardType={keyboardType || "default"}
-      maxLength={maxLength}
+      maxLength={maxLength || 50}
     />
   </View>
 );
@@ -57,7 +144,16 @@ export default function CheckoutScreen({ navigation }) {
   const inputBg = isDarkMode ? "rgba(255,255,255,0.06)" : "#F9FAFB";
 
   const [loading, setLoading] = useState(false);
+  const [cityModalVisible, setCityModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("credit_card");
+
+  // Stateler
+  const [saveCard, setSaveCard] = useState(false);
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedSavedCard, setSelectedSavedCard] = useState(null);
+  const [savedAddresses, setSavedAddresses] = useState([]); // ✅ Yeni eklendi
+  const [selectedAddressId, setSelectedAddressId] = useState(null); // ✅ Yeni eklendi
+
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -65,6 +161,7 @@ export default function CheckoutScreen({ navigation }) {
     district: "",
     address: "",
   });
+
   const [cardForm, setCardForm] = useState({
     cardNumber: "",
     cardHolder: "",
@@ -72,15 +169,49 @@ export default function CheckoutScreen({ navigation }) {
     cvv: "",
   });
 
+  // Kullanıcı verilerini çek (Kartlar ve Adresler)
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const res = await api.get("/users/profile");
+      if (res.data?.data) {
+        setSavedCards(res.data.data.cards || []);
+        setSavedAddresses(res.data.data.addresses || []); // ✅ Adresleri state'e yükle
+      }
+    } catch (e) {
+      console.log("Kullanıcı verileri çekilemedi:", e.message);
+    }
+  };
+
+  // ✅ Kayıtlı adresi seçince formu doldurma fonksiyonu
+  const handleSelectAddress = (addr) => {
+    setSelectedAddressId(addr._id);
+    setForm({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      city: addr.city,
+      district: addr.district,
+      address: addr.address,
+    });
+  };
+
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
 
-  const handleChange = (key, value) =>
+  const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  const handleCardChange = (key, value) =>
+    if (selectedAddressId) setSelectedAddressId(null); // Manuel değişiklik yapılırsa seçimi kaldır
+  };
+
+  const handleCardChange = (key, value) => {
     setCardForm((prev) => ({ ...prev, [key]: value }));
+    if (selectedSavedCard) setSelectedSavedCard(null);
+  };
 
   const formatCardNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
@@ -102,7 +233,7 @@ export default function CheckoutScreen({ navigation }) {
       Alert.alert("Eksik Bilgi", "Lütfen tüm teslimat alanlarını doldurun.");
       return;
     }
-    if (paymentMethod === "credit_card") {
+    if (paymentMethod === "credit_card" && !selectedSavedCard) {
       if (
         !cardForm.cardNumber ||
         !cardForm.cardHolder ||
@@ -118,6 +249,9 @@ export default function CheckoutScreen({ navigation }) {
       const res = await api.post("/orders", {
         shippingAddress: form,
         paymentMethod,
+        cardForm: paymentMethod === "credit_card" ? cardForm : null,
+        saveCard: saveCard,
+        useSavedCard: selectedSavedCard,
       });
       clearCart();
       navigation.replace("OrderSuccess", { order: res.data.data });
@@ -157,6 +291,62 @@ export default function CheckoutScreen({ navigation }) {
             <Text style={[styles.sectionTitle, { color: tp }]}>
               📍 Teslimat Adresi
             </Text>
+
+            {/* ✅ Kayıtlı Adresler Yatay Liste */}
+            {savedAddresses.length > 0 && (
+              <View style={{ marginBottom: 15 }}>
+                <Text style={[styles.label, { color: tm, marginBottom: 8 }]}>
+                  Kayıtlı Adreslerim
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ flexDirection: "row" }}
+                >
+                  {savedAddresses.map((addr) => (
+                    <TouchableOpacity
+                      key={addr._id}
+                      onPress={() => handleSelectAddress(addr)}
+                      style={[
+                        {
+                          padding: 12,
+                          borderRadius: 12,
+                          borderWidth: 1,
+                          marginRight: 10,
+                          backgroundColor: inputBg,
+                          borderColor:
+                            selectedAddressId === addr._id
+                              ? colors.primary
+                              : cardBorder,
+                          minWidth: 140,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="location"
+                        size={18}
+                        color={
+                          selectedAddressId === addr._id ? colors.primary : tm
+                        }
+                      />
+                      <Text
+                        style={{ color: tp, fontWeight: "600", marginTop: 4 }}
+                        numberOfLines={1}
+                      >
+                        {addr.fullName}
+                      </Text>
+                      <Text
+                        style={{ color: tm, fontSize: 11 }}
+                        numberOfLines={1}
+                      >
+                        {addr.district} / {addr.city}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <InputField
               label="Ad Soyad"
               field="fullName"
@@ -179,27 +369,37 @@ export default function CheckoutScreen({ navigation }) {
               cardBorder={cardBorder}
               tp={tp}
               tm={tm}
+              maxLength={11}
             />
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <InputField
-                  label="Şehir"
-                  field="city"
-                  placeholder="İstanbul"
-                  form={form}
-                  handleChange={handleChange}
-                  inputBg={inputBg}
-                  cardBorder={cardBorder}
-                  tp={tp}
-                  tm={tm}
-                />
+                <Text style={[styles.label, { color: tm, marginBottom: 6 }]}>
+                  Şehir
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: inputBg,
+                      borderColor: cardBorder,
+                      justifyContent: "center",
+                    },
+                  ]}
+                  onPress={() => setCityModalVisible(true)}
+                >
+                  <Text style={{ color: form.city ? tp : tm }}>
+                    {form.city || "Seçiniz"}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
               <View style={{ width: 12 }} />
+
               <View style={{ flex: 1 }}>
                 <InputField
                   label="İlçe"
                   field="district"
-                  placeholder="Kadıköy"
+                  placeholder="ilçe"
                   form={form}
                   handleChange={handleChange}
                   inputBg={inputBg}
@@ -282,13 +482,74 @@ export default function CheckoutScreen({ navigation }) {
               </TouchableOpacity>
             ))}
 
-            {/* Kart Bilgileri - sadece kredi kartı seçilince */}
+            {/* Kayıtlı Kartlar Listesi */}
+            {paymentMethod === "credit_card" && savedCards.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={[styles.label, { color: tm, marginBottom: 8 }]}>
+                  Kayıtlı Kartlarım
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ flexDirection: "row" }}
+                >
+                  {savedCards.map((card) => (
+                    <TouchableOpacity
+                      key={card._id}
+                      onPress={() => {
+                        setSelectedSavedCard(card._id);
+                        setCardForm({
+                          cardNumber: "**** **** **** " + card.lastFourDigits,
+                          cardHolder: card.cardHolder,
+                          expiry: card.expiry,
+                          cvv: "***",
+                        });
+                      }}
+                      style={[
+                        {
+                          padding: 12,
+                          borderRadius: 12,
+                          borderWidth: 1,
+                          marginRight: 10,
+                          backgroundColor: inputBg,
+                          borderColor:
+                            selectedSavedCard === card._id
+                              ? colors.primary
+                              : cardBorder,
+                          minWidth: 150,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="card"
+                        size={20}
+                        color={
+                          selectedSavedCard === card._id ? colors.primary : tm
+                        }
+                      />
+                      <Text
+                        style={{ color: tp, fontWeight: "600", marginTop: 4 }}
+                      >
+                        {card.cardTitle}
+                      </Text>
+                      <Text style={{ color: tm, fontSize: 12 }}>
+                        **** {card.lastFourDigits}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Kart Bilgileri */}
             {paymentMethod === "credit_card" && (
               <View
                 style={[styles.cardFormContainer, { borderColor: cardBorder }]}
               >
                 <Text style={[styles.cardFormTitle, { color: tp }]}>
-                  Kart Bilgileri
+                  {selectedSavedCard
+                    ? "Seçili Kart Bilgileri"
+                    : "Yeni Kart Bilgileri"}
                 </Text>
 
                 <View style={styles.inputGroup}>
@@ -307,6 +568,7 @@ export default function CheckoutScreen({ navigation }) {
                     placeholder="0000 0000 0000 0000"
                     placeholderTextColor={tm}
                     value={cardForm.cardNumber}
+                    editable={!selectedSavedCard}
                     onChangeText={(v) =>
                       handleCardChange("cardNumber", formatCardNumber(v))
                     }
@@ -331,6 +593,7 @@ export default function CheckoutScreen({ navigation }) {
                     placeholder="AD SOYAD"
                     placeholderTextColor={tm}
                     value={cardForm.cardHolder}
+                    editable={!selectedSavedCard}
                     onChangeText={(v) =>
                       handleCardChange("cardHolder", v.toUpperCase())
                     }
@@ -356,6 +619,7 @@ export default function CheckoutScreen({ navigation }) {
                         placeholder="AA/YY"
                         placeholderTextColor={tm}
                         value={cardForm.expiry}
+                        editable={!selectedSavedCard}
                         onChangeText={(v) =>
                           handleCardChange("expiry", formatExpiry(v))
                         }
@@ -380,6 +644,7 @@ export default function CheckoutScreen({ navigation }) {
                         placeholder="***"
                         placeholderTextColor={tm}
                         value={cardForm.cvv}
+                        editable={!selectedSavedCard}
                         onChangeText={(v) => handleCardChange("cvv", v)}
                         keyboardType="numeric"
                         maxLength={3}
@@ -388,6 +653,27 @@ export default function CheckoutScreen({ navigation }) {
                     </View>
                   </View>
                 </View>
+
+                {!selectedSavedCard && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginTop: 10,
+                      paddingVertical: 5,
+                    }}
+                    onPress={() => setSaveCard(!saveCard)}
+                  >
+                    <Ionicons
+                      name={saveCard ? "checkbox" : "square-outline"}
+                      size={22}
+                      color={saveCard ? colors.primary : tm}
+                    />
+                    <Text style={{ color: tp, marginLeft: 10, fontSize: 14 }}>
+                      Kartımı gelecekteki alışverişler için kaydet
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -451,6 +737,46 @@ export default function CheckoutScreen({ navigation }) {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Şehir Seçim Modalı */}
+        <Modal
+          visible={cityModalVisible}
+          animationType="slide"
+          transparent={true}
+        >
+          <View style={styles.modalOverlay}>
+            <View
+              style={[
+                styles.modalContent,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: tp }]}>
+                  Şehir Seçin
+                </Text>
+                <TouchableOpacity onPress={() => setCityModalVisible(false)}>
+                  <Ionicons name="close" size={26} color={tp} />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={CITIES}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.cityItem, { borderBottomColor: cardBorder }]}
+                    onPress={() => {
+                      handleChange("city", item);
+                      setCityModalVisible(false);
+                    }}
+                  >
+                    <Text style={{ color: tp, fontSize: 16 }}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -475,7 +801,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    height: 50,
     fontSize: 15,
   },
   row: { flexDirection: "row" },
@@ -515,4 +841,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   orderBtnText: { color: "#FFF", fontWeight: "bold", fontSize: 16 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: "60%",
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "bold" },
+  cityItem: { paddingVertical: 16, borderBottomWidth: 1 },
 });

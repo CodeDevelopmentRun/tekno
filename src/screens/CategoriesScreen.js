@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { FavoriteContext } from "../context/FavoriteContext";
+import { CartContext } from "../context/CartContext";
 import api from "../api/axiosConfig";
 
 const CATEGORIES = [
@@ -105,16 +108,15 @@ const CATEGORIES = [
 
 export default function CategoriesScreen({ navigation, route }) {
   const { isDarkMode, colors } = useTheme();
+  const { favorites, toggleFavorite } = useContext(FavoriteContext);
+  const { addToCart } = useContext(CartContext);
 
-  // 1. HomeScreen'den gelen searchQuery'yi başlangıç değeri olarak al
   const [searchQuery, setSearchQuery] = useState(
     route.params?.searchQuery || "",
   );
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Ürün araması için yeni state'ler
   const [allProducts, setAllProducts] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
 
@@ -123,14 +125,12 @@ export default function CategoriesScreen({ navigation, route }) {
   const bg = isDarkMode ? "#111827" : "#FFFFFF";
   const border = isDarkMode ? "rgba(255,255,255,0.1)" : "#F0F0F0";
 
-  // 2. Sayfa her açıldığında (HomeScreen'den gelindiğinde) yeni query'yi yakala
   useEffect(() => {
     if (route.params?.searchQuery) {
       setSearchQuery(route.params.searchQuery);
     }
   }, [route.params?.searchQuery]);
 
-  // 3. searchQuery değiştiğinde ürünleri API'den çekip filtrele
   useEffect(() => {
     if (!searchQuery.trim()) {
       setAllProducts([]);
@@ -168,48 +168,79 @@ export default function CategoriesScreen({ navigation, route }) {
     });
   };
 
-  const loadByCategory = async (categoryName) => {
+  const handleAddToCart = async (item) => {
     try {
-      setLoading(true);
-      const res = await api.get(
-        `/products/category/${encodeURIComponent(categoryName)}`,
-      );
-      setProducts(res.data.data || []);
+      await addToCart(item, null, 1);
+      Alert.alert("Başarılı", "Ürün sepete eklendi", [
+        {
+          text: "Sepete Git",
+          onPress: () => navigation.navigate("MainTabs", { screen: "Sepetim" }),
+        },
+        { text: "Alışverişe Devam", style: "cancel" },
+      ]);
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      Alert.alert("Hata", "Sepete eklenemedi");
     }
   };
 
-  const renderProduct = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.productCard, { backgroundColor: bg, borderColor: border }]}
-      onPress={() =>
-        navigation.navigate("ProductDetail", { productId: item._id })
-      }
-    >
-      <Image
-        source={{
-          uri:
-            item.images?.[0] || "https://picsum.photos/100?random=" + item._id,
-        }}
-        style={styles.productImage}
-      />
-      <View style={styles.productInfo}>
-        <Text style={[styles.productBrand, { color: colors.primary }]}>
-          {item.brand}
-        </Text>
-        <Text style={[styles.productName, { color: tp }]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <Text style={styles.productPrice}>
-          {item.price?.toLocaleString()} TL
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={tm} />
-    </TouchableOpacity>
-  );
+  const renderProduct = ({ item }) => {
+    const isFav = favorites.some((f) => f._id === item._id);
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.productCard,
+          { backgroundColor: bg, borderColor: border },
+        ]}
+        onPress={() =>
+          navigation.navigate("ProductDetail", { productId: item._id })
+        }
+        activeOpacity={0.85}
+      >
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              "https://picsum.photos/100?random=" + item._id,
+          }}
+          style={styles.productImage}
+        />
+        <View style={styles.productInfo}>
+          <Text style={[styles.productBrand, { color: colors.primary }]}>
+            {item.brand}
+          </Text>
+          <Text style={[styles.productName, { color: tp }]} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text style={styles.productPrice}>
+            {item.price?.toLocaleString()} TL
+          </Text>
+        </View>
+
+        {/* ✅ Favori + Sepet Butonları — item._id gönderiliyor */}
+        <View style={styles.actionBtns}>
+          <TouchableOpacity
+            onPress={() => toggleFavorite(item._id)}
+            style={styles.iconBtn}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Ionicons
+              name={isFav ? "heart" : "heart-outline"}
+              size={20}
+              color={isFav ? "#EF4444" : tm}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleAddToCart(item)}
+            style={[styles.iconBtn, { backgroundColor: colors.primary + "18" }]}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Ionicons name="cart-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
@@ -273,7 +304,6 @@ export default function CategoriesScreen({ navigation, route }) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Header */}
         <View style={[styles.header, { borderBottomColor: border }]}>
           <Text style={[styles.title, { color: tp }]}>
             {searchQuery.trim() ? "Arama Sonuçları" : "Kategoriler"}
@@ -289,7 +319,6 @@ export default function CategoriesScreen({ navigation, route }) {
           )}
         </View>
 
-        {/* Search */}
         <View
           style={[
             styles.searchContainer,
@@ -311,7 +340,6 @@ export default function CategoriesScreen({ navigation, route }) {
           )}
         </View>
 
-        {/* 4. searchQuery varsa ürün listesi, yoksa kategori listesi göster */}
         {searchQuery.trim() ? (
           loadingSearch ? (
             <ActivityIndicator
@@ -402,6 +430,19 @@ const styles = StyleSheet.create({
   productBrand: { fontSize: 11, fontWeight: "600" },
   productName: { fontSize: 13, fontWeight: "600", marginVertical: 3 },
   productPrice: { fontSize: 14, fontWeight: "bold", color: "#10B981" },
+  actionBtns: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 8,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: "600" },
   emptySubtitle: { fontSize: 13 },

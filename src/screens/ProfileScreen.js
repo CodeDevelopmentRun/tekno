@@ -88,7 +88,7 @@ export default function ProfileScreen({ navigation }) {
           subtitle: "Teslimat adreslerini yönetin",
           color: "#10B981",
           bgColor: "rgba(16,185,129,0.15)",
-          onPress: () => {},
+          onPress: () => navigation.navigate("Adreslerim"),
         },
         {
           icon: "card-outline",
@@ -96,7 +96,7 @@ export default function ProfileScreen({ navigation }) {
           subtitle: "Kartlarınızı yönetin",
           color: "#8B5CF6",
           bgColor: "rgba(139,92,246,0.15)",
-          onPress: () => {},
+          onPress: () => navigation.navigate("SavedCards"), // ✅ AKTİF EDİLDİ
         },
       ],
     },
@@ -130,7 +130,7 @@ export default function ProfileScreen({ navigation }) {
           subtitle: "SSS ve iletişim",
           color: "#3B82F6",
           bgColor: "rgba(59,130,246,0.15)",
-          onPress: () => {},
+          onPress: () => navigation.navigate("Support"),
         },
         {
           icon: "information-circle-outline",

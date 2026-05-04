@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { AdminContext } from "../context/AdminContext";
 import { COLORS } from "../utils/colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useContext, useState, useEffect } from "react";
 const { width } = Dimensions.get("window");
 
@@ -24,13 +25,23 @@ export default function AdminDashboardScreen({ navigation }) {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch("http://10.0.2.2:5000/api/admin/dashboard-stats");
+      const token = await AsyncStorage.getItem("adminToken");
+      const res = await fetch(
+        "http://10.0.2.2:5000/api/admin/dashboard-stats",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
       const data = await res.json();
+
       setStats([
         {
           id: 1,
           title: "Toplam Kullanıcı",
-          value: data.totalUsers.toString(),
+          value: (data?.totalUsers ?? 0).toString(),
           change: "+0%",
           icon: "people",
           color: COLORS.adminInfo,
@@ -39,7 +50,7 @@ export default function AdminDashboardScreen({ navigation }) {
         {
           id: 2,
           title: "Toplam Ürün",
-          value: data.totalProducts.toString(),
+          value: (data?.totalProducts ?? 0).toString(),
           change: "+0%",
           icon: "cube",
           color: COLORS.adminSuccess,
@@ -48,7 +59,7 @@ export default function AdminDashboardScreen({ navigation }) {
         {
           id: 3,
           title: "Toplam Sipariş",
-          value: data.totalOrders.toString(),
+          value: (data?.totalOrders ?? 0).toString(),
           change: "+0%",
           icon: "cart",
           color: COLORS.adminWarning,
@@ -57,7 +68,7 @@ export default function AdminDashboardScreen({ navigation }) {
         {
           id: 4,
           title: "Toplam Gelir",
-          value: "₺" + data.totalRevenue.toLocaleString("tr-TR"),
+          value: "₺" + (data?.totalRevenue ?? 0).toLocaleString("tr-TR"),
           change: "+0%",
           icon: "cash",
           color: COLORS.adminPrimary,
@@ -66,6 +77,44 @@ export default function AdminDashboardScreen({ navigation }) {
       ]);
     } catch (err) {
       console.error("Stats yüklenemedi:", err);
+      setStats([
+        {
+          id: 1,
+          title: "Toplam Kullanıcı",
+          value: "0",
+          change: "0%",
+          icon: "people",
+          color: COLORS.adminInfo,
+          bgColor: "#EFF6FF",
+        },
+        {
+          id: 2,
+          title: "Toplam Ürün",
+          value: "0",
+          change: "0%",
+          icon: "cube",
+          color: COLORS.adminSuccess,
+          bgColor: "#F0FDF4",
+        },
+        {
+          id: 3,
+          title: "Toplam Sipariş",
+          value: "0",
+          change: "0%",
+          icon: "cart",
+          color: COLORS.adminWarning,
+          bgColor: "#FFFBEB",
+        },
+        {
+          id: 4,
+          title: "Toplam Gelir",
+          value: "₺0",
+          change: "0%",
+          icon: "cash",
+          color: COLORS.adminPrimary,
+          bgColor: "#F5F3FF",
+        },
+      ]);
     }
   };
 

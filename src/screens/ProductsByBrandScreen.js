@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useContext } from "react";
 import {
   View,
   Text,
@@ -10,10 +10,13 @@ import {
   Dimensions,
   Modal,
   ScrollView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { FavoriteContext } from "../context/FavoriteContext";
+import { CartContext } from "../context/CartContext";
 import api from "../api/axiosConfig";
 
 const { width } = Dimensions.get("window");
@@ -47,6 +50,9 @@ const COLOR_MAP = {
 export default function ProductsByBrandScreen({ navigation, route }) {
   const { categoryName, brandName } = route.params;
   const { isDarkMode, colors } = useTheme();
+  const { favorites, toggleFavorite } = useContext(FavoriteContext);
+  const { addToCart } = useContext(CartContext);
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortModal, setSortModal] = useState(false);
@@ -81,7 +87,21 @@ export default function ProductsByBrandScreen({ navigation, route }) {
     }
   };
 
-  // Dinamik filtre seçenekleri
+  const handleAddToCart = async (item) => {
+    try {
+      await addToCart(item, null, 1);
+      Alert.alert("Başarılı", "Ürün sepete eklendi", [
+        {
+          text: "Sepete Git",
+          onPress: () => navigation.navigate("MainTabs", { screen: "Sepetim" }),
+        },
+        { text: "Alışverişe Devam", style: "cancel" },
+      ]);
+    } catch (e) {
+      Alert.alert("Hata", "Sepete eklenemedi");
+    }
+  };
+
   const availableBrands = useMemo(
     () => [...new Set(products.map((p) => p.brand).filter(Boolean))],
     [products],
@@ -180,57 +200,95 @@ export default function ProductsByBrandScreen({ navigation, route }) {
     (o) => o.value === selectedSort,
   )?.label;
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.card, { backgroundColor: bg, borderColor: border }]}
-      onPress={() =>
-        navigation.navigate("ProductDetail", { productId: item._id })
-      }
-      activeOpacity={0.8}
-    >
-      <Image
-        source={{
-          uri:
-            item.images?.[0] || "https://picsum.photos/200?random=" + item._id,
-        }}
-        style={styles.cardImage}
-      />
-      <View style={styles.cardBody}>
-        <Text
-          style={[styles.cardBrand, { color: colors.primary }]}
-          numberOfLines={1}
+  const renderItem = ({ item }) => {
+    const isFav = favorites.some((f) => f._id === item._id);
+
+    return (
+      <TouchableOpacity
+        style={[styles.card, { backgroundColor: bg, borderColor: border }]}
+        onPress={() =>
+          navigation.navigate("ProductDetail", { productId: item._id })
+        }
+        activeOpacity={0.8}
+      >
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              "https://picsum.photos/200?random=" + item._id,
+          }}
+          style={styles.cardImage}
+        />
+
+        {/* ✅ Favori butonu — item._id gönderiliyor */}
+        <TouchableOpacity
+          style={styles.favOverlay}
+          onPress={() => toggleFavorite(item._id)}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          {item.brand}
-        </Text>
-        <Text style={[styles.cardName, { color: tp }]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        {item.colors?.length > 0 && (
-          <View style={styles.colorDots}>
-            {item.colors.slice(0, 4).map((c, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.colorDot,
-                  {
-                    backgroundColor: COLOR_MAP[c] || "#ccc",
-                    borderColor: border,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-        )}
-        <Text style={styles.cardPrice}>{item.price?.toLocaleString()} TL</Text>
-        {item.originalPrice && item.originalPrice > item.price && (
-          <Text style={styles.cardOriginalPrice}>
-            {item.originalPrice?.toLocaleString()} TL
+          <Ionicons
+            name={isFav ? "heart" : "heart-outline"}
+            size={20}
+            color={isFav ? "#EF4444" : "#FFF"}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.cardBody}>
+          <Text
+            style={[styles.cardBrand, { color: colors.primary }]}
+            numberOfLines={1}
+          >
+            {item.brand}
           </Text>
-        )}
-        {item.stock === 0 && <Text style={styles.outOfStock}>Stok Yok</Text>}
-      </View>
-    </TouchableOpacity>
-  );
+          <Text style={[styles.cardName, { color: tp }]} numberOfLines={2}>
+            {item.name}
+          </Text>
+          {item.colors?.length > 0 && (
+            <View style={styles.colorDots}>
+              {item.colors.slice(0, 4).map((c, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.colorDot,
+                    {
+                      backgroundColor: COLOR_MAP[c] || "#ccc",
+                      borderColor: border,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.cardPrice}>
+            {item.price?.toLocaleString()} TL
+          </Text>
+          {item.originalPrice && item.originalPrice > item.price && (
+            <Text style={styles.cardOriginalPrice}>
+              {item.originalPrice?.toLocaleString()} TL
+            </Text>
+          )}
+          {item.stock === 0 && <Text style={styles.outOfStock}>Stok Yok</Text>}
+
+          {/* Sepete Ekle butonu */}
+          <TouchableOpacity
+            style={[
+              styles.cartBtn,
+              {
+                backgroundColor: item.stock === 0 ? "#D1D5DB" : colors.primary,
+              },
+            ]}
+            onPress={() => handleAddToCart(item)}
+            disabled={item.stock === 0}
+          >
+            <Ionicons name="cart-outline" size={15} color="#FFF" />
+            <Text style={styles.cartBtnText}>
+              {item.stock === 0 ? "Stok Yok" : "Sepete Ekle"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const FilterSection = ({ title, children }) => (
     <View style={styles.filterSection}>
@@ -242,7 +300,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Header */}
         <View style={[styles.header, { borderBottomColor: border }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -254,7 +311,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Toolbar */}
         <View
           style={[
             styles.toolbar,
@@ -318,7 +374,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* İçerik */}
         {loading ? (
           <ActivityIndicator
             size="large"
@@ -432,7 +487,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Stok */}
               <FilterSection title="STOK DURUMU">
                 <TouchableOpacity
                   style={[styles.optionRow, { borderBottomColor: border }]}
@@ -459,7 +513,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
                 </TouchableOpacity>
               </FilterSection>
 
-              {/* Fiyat Aralığı */}
               {priceRanges.length > 0 && (
                 <FilterSection title="FİYAT ARALIĞI">
                   {priceRanges.map((range, i) => (
@@ -497,7 +550,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
                 </FilterSection>
               )}
 
-              {/* Renkler */}
               {availableColors.length > 0 && (
                 <FilterSection title="RENK">
                   <View style={styles.colorFilterRow}>
@@ -543,7 +595,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
                 </FilterSection>
               )}
 
-              {/* Markalar */}
               {availableBrands.length > 1 && (
                 <FilterSection title="MARKA">
                   <View style={styles.chipRow}>
@@ -580,7 +631,6 @@ export default function ProductsByBrandScreen({ navigation, route }) {
                 </FilterSection>
               )}
 
-              {/* Kategoriler */}
               {availableCategories.length > 1 && (
                 <FilterSection title="KATEGORİ">
                   <View style={styles.chipRow}>
@@ -688,6 +738,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   cardImage: { width: "100%", height: CARD_WIDTH, resizeMode: "cover" },
+  favOverlay: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: 20,
+    padding: 6,
+  },
   cardBody: { padding: 10, gap: 3 },
   cardBrand: {
     fontSize: 11,
@@ -715,6 +773,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
+  cartBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    marginTop: 8,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  cartBtnText: { color: "#FFF", fontSize: 12, fontWeight: "700" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: "600" },
   resetBtn: {
@@ -771,7 +839,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // Renk filtreleri
   colorFilterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   colorFilterChip: {
     flexDirection: "row",
@@ -784,7 +851,6 @@ const styles = StyleSheet.create({
   },
   colorFilterDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1 },
   colorFilterText: { fontSize: 13, fontWeight: "500" },
-  // Chip (marka & kategori)
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     paddingHorizontal: 14,
